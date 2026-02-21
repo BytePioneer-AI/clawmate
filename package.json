@@ -1,0 +1,22 @@
+{
+  "name": "clawmate-mvp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "commonjs",
+  "bin": {
+    "clawmate-setup": "packages/clawmate-companion/bin/cli.cjs"
+  },
+  "scripts": {
+    "clawmate:plugin:check": "node packages/clawmate-companion/scripts/check-manifest-id.mjs",
+    "clawmate:probe:openai": "cd packages/clawmate-companion && node --import tsx skills/clawmate-companion/scripts/probe-openai-edits.ts",
+    "clawmate:setup": "node packages/clawmate-companion/bin/cli.cjs"
+  },
+  "dependencies": {
+    "openai": "^6.22.0",
+    "tsx": "^4.20.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2"
+  }
+}

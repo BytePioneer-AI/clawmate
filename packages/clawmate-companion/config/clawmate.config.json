@@ -1,0 +1,26 @@
+{
+  "selectedCharacter": "brooke",
+  "characterRoot": "skills/clawmate-companion/assets/characters",
+  "defaultProvider": "mock",
+  "fallback": {
+    "enabled": false,
+    "order": []
+  },
+  "retry": {
+    "maxAttempts": 2,
+    "backoffMs": 1000
+  },
+  "pollIntervalMs": 1500,
+  "pollTimeoutMs": 120000,
+  "degradeMessage": "图片暂时生成失败，我先陪你聊会儿。",
+  "proactiveSelfie": {
+    "enabled": false,
+    "probability": 0.1
+  },
+  "providers": {
+    "mock": {
+      "type": "mock",
+      "pendingPolls": 0
+    }
+  }
+}

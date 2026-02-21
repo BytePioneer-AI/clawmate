@@ -1,0 +1,60 @@
+# Project-specific
+doc/reference-projects/
+clawmate/image/
+openspec/
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test output
+coverage/
+.nyc_output/
+
+# Build output
+dist/
+build/
+out/
+
+# Caches
+.cache/
+.eslintcache
+.parcel-cache/
+.turbo/
+
+# Framework output
+.next/
+.nuxt/
+.svelte-kit/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Package manager files
+.npm/
+.pnpm-store/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+.codex/

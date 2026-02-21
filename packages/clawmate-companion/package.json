@@ -1,0 +1,19 @@
+{
+  "name": "@clawmate/clawmate-companion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ClawMate companion plugin for OpenClaw",
+  "bin": {
+    "clawmate": "./bin/cli.cjs"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "setup": "node ./bin/cli.cjs",
+    "check:manifest-id": "node ./scripts/check-manifest-id.mjs"
+  }
+}
