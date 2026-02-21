@@ -19,6 +19,37 @@ She knows what time it is and what you're doing. Ask her where she is, and she'l
 
 ---
 
+## Showcase
+
+### Chat Interface
+
+<div align="center">
+  <a href="images/demo/demo.png">
+    <img src="images/demo/demo1.png" width="45%" alt="Specified Scene" />
+  </a>
+  <a href="images/demo/demo2.png">
+    <img src="images/demo/demo2.png" width="45%" alt="Unspecified Scene" />
+  </a>
+  <br/>
+  <sub>Left: Specified Scene | Right: Unspecified Scene</sub>
+</div>
+
+### Generation Results
+
+More example images at <a href="images/demo">images/demo</a>
+
+<div align="center">
+  <img src="images/demo/1.jpg" width="45%" alt="Example 1" />
+  <img src="images/demo/6.jpg" width="45%" alt="Example 2" />
+  <br/>
+  <img src="images/demo/8.jpg" width="45%" alt="Example 3" />
+  <img src="images/demo/9.jpg" width="45%" alt="Example 4" />
+  <br/>
+  <sub>Auto-generated results under different time states and scenes</sub>
+</div>
+
+---
+
 ## Quick Start
 
 Ensure [OpenClaw](https://github.com/openclaw/openclaw) is installed.

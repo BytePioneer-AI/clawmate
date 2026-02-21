@@ -33,6 +33,7 @@
   <br/>
   <sub>左：指定场景 | 右：不指定场景</sub>
 </div>
+
 ### 生成效果
 
 更多样例图片见 <a href="doc/images/demo">doc/images/demo</a>
