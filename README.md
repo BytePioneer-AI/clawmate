@@ -74,7 +74,7 @@
 首次安装与后续更新使用同一命令：
 
 ```bash
-npx github:BytePioneer-AI/clawmeta
+npx github:BytePioneer-AI/clawmate
 ```
 
 交互式安装向导会引导你完成角色选择、主动发图配置和图像服务配置。
@@ -95,8 +95,8 @@ npx github:BytePioneer-AI/clawmeta
 ## 本地开发
 
 ```bash
-git clone https://github.com/BytePioneer-AI/clawmeta.git
-cd ClawMate
+git clone https://github.com/BytePioneer-AI/clawmate.git
+cd clawmate
 npm install
 node packages/clawmate-companion/bin/cli.cjs
 ```

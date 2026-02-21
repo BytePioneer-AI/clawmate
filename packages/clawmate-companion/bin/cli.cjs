@@ -802,7 +802,7 @@ ${c("cyan", t("summary_config"))}
   ${OPENCLAW_CONFIG}
 
 ${c("cyan", t("summary_repo"))}
-  https://github.com/BytePioneer-AI/clawmeta
+  https://github.com/BytePioneer-AI/clawmate
 
 ${c("yellow", t("summary_star"))}
 

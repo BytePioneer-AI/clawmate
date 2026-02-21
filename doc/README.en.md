@@ -72,7 +72,7 @@ Ensure [OpenClaw](https://github.com/openclaw/openclaw) is installed.
 Use the same command:
 
 ```bash
-npx github:BytePioneer-AI/clawmeta
+npx github:BytePioneer-AI/clawmate
 ```
 
 The interactive installation wizard will guide you through character selection, proactive selfie configuration, and image service setup.
@@ -93,8 +93,8 @@ Create custom characters:
 ## Local Development
 
 ```bash
-git clone https://github.com/BytePioneer-AI/clawmeta.git
-cd ClawMate
+git clone https://github.com/BytePioneer-AI/clawmate.git
+cd clawmate
 npm install
 node packages/clawmate-companion/bin/cli.cjs
 ```

@@ -11,7 +11,7 @@ ClawMate is an OpenClaw visual companion plugin that generates personalized char
 ### Setup and Installation
 ```bash
 # One-click install (interactive, no clone needed)
-npx github:BytePioneer-AI/clawmeta
+npx github:BytePioneer-AI/clawmate
 
 # Local install (after clone)
 npm install
