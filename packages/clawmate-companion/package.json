@@ -15,5 +15,8 @@
   "scripts": {
     "setup": "node ./bin/cli.cjs",
     "check:manifest-id": "node ./scripts/check-manifest-id.mjs"
+  },
+  "dependencies": {
+    "openai": "^6.22.0"
   }
 }

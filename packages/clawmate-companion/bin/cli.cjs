@@ -73,6 +73,9 @@ const T = {
     field_required: "是必填项",
     config_done: "服务配置完成",
     plugin_path: "插件路径:",
+    deps_install: "安装插件依赖:",
+    deps_ready: "插件依赖已就绪",
+    deps_fail: "插件依赖安装失败:",
     link_ok: "插件链接成功",
     link_fail: "openclaw plugins install 命令失败，尝试手动配置...",
     config_written: "配置已写入:",
@@ -141,6 +144,9 @@ const T = {
     field_required: "is required",
     config_done: "Service configured",
     plugin_path: "Plugin path:",
+    deps_install: "Installing plugin dependencies:",
+    deps_ready: "Plugin dependencies ready",
+    deps_fail: "Failed to install plugin dependencies:",
     link_ok: "Plugin linked successfully",
     link_fail: "openclaw plugins install failed, trying manual config...",
     config_written: "Config written to:",
@@ -413,6 +419,34 @@ function resolvePluginInstallPath() {
   }
   copyDir(PLUGIN_PACKAGE_ROOT, dest);
   return dest;
+}
+
+function ensurePluginDependencies(pluginPath) {
+  const packageJsonPath = path.join(pluginPath, "package.json");
+  const packageJson = readJsonFile(packageJsonPath);
+  const dependencies = Object.keys(packageJson?.dependencies || {});
+
+  if (dependencies.length === 0) {
+    return;
+  }
+
+  const nodeModulesDir = path.join(pluginPath, "node_modules");
+  const missingDeps = dependencies.filter((dep) => !fs.existsSync(path.join(nodeModulesDir, dep)));
+  if (missingDeps.length === 0) {
+    logSuccess(t("deps_ready"));
+    return;
+  }
+
+  logInfo(`${t("deps_install")} ${missingDeps.join(", ")}`);
+  try {
+    execSync("npm install --no-audit --no-fund --omit=dev", {
+      cwd: pluginPath,
+      stdio: "inherit",
+    });
+    logSuccess(t("deps_ready"));
+  } catch {
+    throw new Error(`${t("deps_fail")} ${missingDeps.join(", ")}`);
+  }
 }
 
 // ── Banner ──────────────────────────────────────────────────────────────────
@@ -704,6 +738,7 @@ async function installPlugin(providerKey, providerConfig, characterId, proactive
 
   if (isRemote) {
     logInfo(`${t("plugin_path")} ${pluginPath} (copied)`);
+    ensurePluginDependencies(pluginPath);
   } else {
     logInfo(`${t("plugin_path")} ${pluginPath}`);
   }
