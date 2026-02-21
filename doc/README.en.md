@@ -49,7 +49,7 @@ She knows what time it is and what you're doing. Ask her where she is, and she'l
 
 ### Generation Results
 
-More example images at <a href="images/demo">images/demo</a>
+More example images in [Full Gallery](images/demo/README.md)
 
 <div align="center">
   <img src="images/demo/1.jpg" width="45%" alt="Example 1" />

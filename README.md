@@ -50,7 +50,7 @@
 
 ### 生成效果
 
-更多样例图片见 <a href="doc/images/demo">doc/images/demo</a>
+更多样例图片见 [完整图片展示](doc/images/demo/README.md)
 
 <div align="center">
   <img src="doc/images/demo/1.jpg" width="45%" alt="场景示例1" />
