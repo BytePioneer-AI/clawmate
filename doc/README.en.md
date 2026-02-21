@@ -17,6 +17,19 @@ She knows what time it is and what you're doing. Ask her where she is, and she'l
 - **Custom Characters** — Create custom characters through conversation, LLM guides generation of complete character definitions and saves to disk
 - **Multiple Image Services** — Supports Alibaba Cloud Bailian, Volcengine ARK, fal.ai, OpenAI-compatible endpoints
 
+## Use Cases
+
+- **Personal Companion** — Daily companionship, emotional interaction, life assistant
+- **Virtual Tutor** — Learning guidance, knowledge Q&A, progress tracking
+- **Smart Customer Service** — Enterprise service, brand image, customer engagement
+- **Professional Advisor** — Health management, psychological counseling, career guidance
+
+## Roadmap
+
+- [ ] Second character
+- [ ] Voice features
+- [ ] Video features
+
 ---
 
 ## Showcase
