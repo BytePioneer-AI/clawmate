@@ -73,7 +73,7 @@ const T = {
     field_required: "是必填项",
     config_done: "服务配置完成",
     plugin_path: "插件路径:",
-    deps_install: "安装插件依赖:",
+    deps_install: "安装插件依赖",
     deps_ready: "插件依赖已就绪",
     deps_fail: "插件依赖安装失败:",
     link_ok: "插件链接成功",
@@ -144,7 +144,7 @@ const T = {
     field_required: "is required",
     config_done: "Service configured",
     plugin_path: "Plugin path:",
-    deps_install: "Installing plugin dependencies:",
+    deps_install: "Installing plugin dependencies",
     deps_ready: "Plugin dependencies ready",
     deps_fail: "Failed to install plugin dependencies:",
     link_ok: "Plugin linked successfully",
@@ -437,7 +437,7 @@ function ensurePluginDependencies(pluginPath) {
     return;
   }
 
-  logInfo(`${t("deps_install")} ${missingDeps.join(", ")}`);
+  logInfo(t("deps_install"));
   try {
     execSync("npm install --no-audit --no-fund --omit=dev", {
       cwd: pluginPath,
