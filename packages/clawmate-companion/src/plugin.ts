@@ -176,7 +176,6 @@ async function ensurePersonaInjectedToSoul(
   const existingCharacterId = extractCharacterIdFromSoul(currentSoul);
 
   if (existingCharacterId === characterId) {
-    logger.info("SOUL.md 角色段已是当前角色，跳过注入", { soulPath, characterId });
     return;
   }
 
