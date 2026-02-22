@@ -98,14 +98,7 @@ npx github:BytePioneer-AI/clawmate
 git clone https://github.com/BytePioneer-AI/clawmate.git
 cd clawmate
 npm install
-node packages/clawmate-companion/bin/cli.cjs
-```
-
-验证安装：
-
-```bash
-npx tsc --noEmit
-npm run clawmate:plugin:check
+npm run clawmate:setup
 ```
 
 ---

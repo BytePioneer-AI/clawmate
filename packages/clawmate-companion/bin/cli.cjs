@@ -12,6 +12,45 @@ const readline = require("readline");
 const { execSync } = require("child_process");
 const os = require("os");
 
+function resolveOpenClawHome() {
+  const envHome = process.env.OPENCLAW_HOME?.trim();
+  if (envHome) {
+    return envHome;
+  }
+
+  const home = os.homedir();
+  const candidates = [path.join(home, ".openclaw")];
+
+  if (process.platform === "win32") {
+    const appData = process.env.APPDATA;
+    const localAppData = process.env.LOCALAPPDATA;
+    if (appData) {
+      candidates.push(path.join(appData, ".openclaw"));
+      candidates.push(path.join(appData, "openclaw"));
+      candidates.push(path.join(appData, "OpenClaw"));
+    }
+    if (localAppData) {
+      candidates.push(path.join(localAppData, ".openclaw"));
+      candidates.push(path.join(localAppData, "openclaw"));
+      candidates.push(path.join(localAppData, "OpenClaw"));
+    }
+  }
+
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, "openclaw.json"))) {
+      return dir;
+    }
+  }
+
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) {
+      return dir;
+    }
+  }
+
+  return path.join(home, ".openclaw");
+}
+
 // ── Colors ──────────────────────────────────────────────────────────────────
 const colors = {
   reset: "\x1b[0m",
@@ -27,8 +66,8 @@ const colors = {
 const c = (color, text) => `${colors[color]}${text}${colors.reset}`;
 
 // ── Paths ───────────────────────────────────────────────────────────────────
-const HOME = os.homedir();
-const OPENCLAW_DIR = path.join(HOME, ".openclaw");
+const OPENCLAW_HOME = resolveOpenClawHome();
+const OPENCLAW_DIR = OPENCLAW_HOME;
 const OPENCLAW_CONFIG = path.join(OPENCLAW_DIR, "openclaw.json");
 const OPENCLAW_PLUGINS_DIR = path.join(OPENCLAW_DIR, "plugins");
 const PLUGIN_PACKAGE_ROOT = path.resolve(__dirname, "..");
@@ -339,7 +378,8 @@ function arrowSelect(items, { title = "", initialIndex = 0 } = {}) {
 
 function commandExists(cmd) {
   try {
-    execSync(`which ${cmd}`, { stdio: "ignore" });
+    const checkCmd = process.platform === "win32" ? `where ${cmd}` : `command -v ${cmd}`;
+    execSync(checkCmd, { stdio: "ignore" });
     return true;
   } catch { return false; }
 }
@@ -376,7 +416,11 @@ function currentTag() {
 
 function openBrowser(url) {
   const platform = process.platform;
-  const cmd = platform === "darwin" ? `open "${url}"` : platform === "win32" ? `start "${url}"` : `xdg-open "${url}"`;
+  const cmd = platform === "darwin"
+    ? `open "${url}"`
+    : platform === "win32"
+      ? `cmd /c start "" "${url}"`
+      : `xdg-open "${url}"`;
   try { execSync(cmd, { stdio: "ignore" }); return true; }
   catch { return false; }
 }
@@ -479,7 +523,10 @@ async function checkPrerequisites() {
 
   // Check if plugin already linked
   try {
-    const result = execSync("openclaw plugins list 2>/dev/null", { encoding: "utf8" });
+    const result = execSync("openclaw plugins list", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     if (result.includes(PLUGIN_ID)) {
       logWarn(t("already_installed"));
       return "already_installed";
@@ -513,8 +560,7 @@ function loadCharactersFromDir(dir, builtIn) {
 
 function loadCharacters() {
   const builtInRoot = path.join(PLUGIN_PACKAGE_ROOT, "skills", "clawmate-companion", "assets", "characters");
-  const openClawHome = process.env.OPENCLAW_HOME?.trim() || path.join(HOME, ".openclaw");
-  const userRoot = path.join(openClawHome, "clawmeta");
+  const userRoot = path.join(OPENCLAW_HOME, "clawmeta");
 
   const seenIds = new Set();
   const result = [];
