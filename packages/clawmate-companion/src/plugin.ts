@@ -601,6 +601,7 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
               id: "must match characterId",
               name: "角色中文名（必填）",
               englishName: "角色英文名（可选）",
+              style: '画风风格（可选）："photorealistic"（写实，默认）或 "anime"（动漫）',
               descriptionZh: "角色中文简介（可选）",
               descriptionEn: "角色英文简介（可选）",
               timeStates: "时间状态定义（可选，格式同样例）",
@@ -624,12 +625,13 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
           rules: [
             "characterId 必须全局唯一",
             "meta.id 必须与 characterId 一致",
+            'meta.style 可选，值为 "photorealistic"（写实）或 "anime"（动漫），不填默认 photorealistic',
             "characterPrompt 用 markdown 编写，描述角色完整人格",
             "timeStates 可以为空对象或省略",
             "referenceImage 必须提供，推荐从已有角色复制",
           ],
           userDescription: params.description ?? "",
-          nextStep: "根据以上 schema 和样例，结合用户描述生成角色草稿（characterId、meta、characterPrompt 全文）。展示草稿前，必须先询问用户参考图来源：1) 从已有角色复制（列出 availableCharacters）；2) 用户提供图片。等用户确认参考图后，再展示完整草稿（含 referenceImage），等待用户明确确认后，才能调用 clawmate_create_character。",
+          nextStep: "根据以上 schema 和样例，结合用户描述生成角色草稿（characterId、meta（含 style）、characterPrompt 全文）。展示草稿前，必须先询问用户：1) 参考图来源——从已有角色复制（列出 availableCharacters）或用户提供图片；2) 画风风格——写实（photorealistic）还是动漫（anime），由用户明确指定。等用户确认后，再展示完整草稿（含 referenceImage 和 style），等待用户明确确认后，才能调用 clawmate_create_character。",
         };
 
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
@@ -661,6 +663,7 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
             id: { type: "string" },
             name: { type: "string" },
             englishName: { type: "string" },
+            style: { type: "string", enum: ["photorealistic", "anime"], description: '画风风格，默认 photorealistic' },
             descriptionZh: { type: "string" },
             descriptionEn: { type: "string" },
             timeStates: { type: "object" },

@@ -11,7 +11,7 @@ She knows what time it is and what you're doing. Ask her where she is, and she'l
 ## Features
 
 - **Time Awareness** — Morning, class, lunch break, evening, late night - scenes and outfits automatically switch with time
-- **Contextual Image Generation** — Generate realistic selfies based on conversation content and current state, not template-based
+- **Contextual Image Generation** — Generate selfies based on conversation content and current state (supports photorealistic and anime styles), not template-based
 - **Proactive Selfies** — Configurable trigger frequency, randomly sends selfies during casual chats to show care
 - **Multiple Characters** — Each character has independent persona, time states, and reference images, switchable via configuration
 - **Custom Characters** — Create custom characters through conversation, LLM guides generation of complete character definitions and saves to disk
@@ -87,7 +87,7 @@ Take a photo in pink pajamas in the bedroom at night
 
 Create custom characters:
 ```
-"Help me create a new character, she is a [describe occupation/personality/background]"
+Help me create a new character, she is a [describe occupation/personality/background] anime/photorealistic character
 ```
 
 ## Local Development
@@ -195,7 +195,7 @@ Create a new character directory under `assets/characters/`, containing:
 
 ```
 {character-id}/
-├── meta.json           # id, name, timeStates
+├── meta.json           # id, name, style (photorealistic/anime), timeStates
 ├── character-prompt.md # Character persona (English)
 ├── README.md           # Character profile (Chinese)
 ├── images/             # Reference images folder

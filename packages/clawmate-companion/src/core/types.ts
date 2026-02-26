@@ -8,9 +8,12 @@ export interface TimeStateDefinition {
 
 export type SelfieMode = "mirror" | "direct";
 
+export type CharacterStyle = "photorealistic" | "anime";
+
 export interface CharacterMeta {
   id?: string;
   name?: string;
+  style?: CharacterStyle;
   timeStates?: Record<string, TimeStateDefinition>;
   [key: string]: unknown;
 }
@@ -125,6 +128,7 @@ export interface CreateCharacterMeta {
   id: string;
   name: string;
   englishName?: string;
+  style?: CharacterStyle;
   descriptionZh?: string;
   descriptionEn?: string;
   timeStates?: Record<string, TimeStateDefinition>;

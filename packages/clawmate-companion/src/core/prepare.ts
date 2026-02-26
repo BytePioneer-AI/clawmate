@@ -1,6 +1,6 @@
 import { loadCharacterAssets } from "./characters";
 import { resolveTimeState } from "./time-state";
-import type { ClawMateConfig, SelfieMode } from "./types";
+import type { CharacterStyle, ClawMateConfig, SelfieMode } from "./types";
 
 export interface PrepareResult {
   timeContext: {
@@ -14,6 +14,7 @@ export interface PrepareResult {
     requirements: string[];
   };
   promptGuide: {
+    style: CharacterStyle;
     requiredFields: string[];
     rules: string[];
     wordRange: string;
@@ -28,16 +29,30 @@ export interface PrepareSelfieOptions {
   now?: Date;
 }
 
-const PROMPT_RULES = [
+const SHARED_RULES = [
   "single scene only, no scene mixing",
   "lighting must be physically plausible for the scene and time",
-  "keep human realism: natural skin texture, realistic anatomy, believable proportions",
-  "candid daily-life photo style, not fashion editorial",
   "include 1-2 concrete background props to support scene context",
   "do not describe character identity (age, ethnicity, beauty) — the reference image handles identity",
 ];
 
-const REQUIRED_FIELDS = ["scene", "action", "expression", "outfit", "lighting", "camera", "realism"];
+const STYLE_RULES: Record<CharacterStyle, string[]> = {
+  photorealistic: [
+    ...SHARED_RULES,
+    "keep human realism: natural skin texture, realistic anatomy, believable proportions",
+    "candid daily-life photo style, not fashion editorial",
+  ],
+  anime: [
+    ...SHARED_RULES,
+    "maintain anime/manga art style consistent with the reference image",
+    "avoid photorealistic textures — keep consistent 2D illustrated look",
+  ],
+};
+
+const STYLE_REQUIRED_FIELDS: Record<CharacterStyle, string[]> = {
+  photorealistic: ["scene", "action", "expression", "outfit", "lighting", "camera", "realism"],
+  anime: ["scene", "action", "expression", "outfit", "lighting", "camera", "art_style"],
+};
 
 const MODE_REQUIREMENTS: Record<SelfieMode, string[]> = {
   direct: [
@@ -54,11 +69,19 @@ const MODE_REQUIREMENTS: Record<SelfieMode, string[]> = {
   ],
 };
 
-const MODE_EXAMPLES: Record<SelfieMode, string> = {
-  direct:
-    "Photorealistic direct selfie, [scene matching current time and context], [1-2 background props supporting the scene], wearing [outfit appropriate for the situation], [lighting physically plausible for the scene], natural relaxed expression, medium close-up framing, natural skin texture, candid daily-life photo style, no studio glamour look",
-  mirror:
-    "Photorealistic mirror selfie, standing in front of [mirror location matching scene], wearing [outfit appropriate for the situation], phone clearly visible in hand, posture natural and relaxed, [background environment visible], [lighting physically plausible for the scene], mirror logic physically correct, authentic candid snapshot style",
+const STYLE_MODE_EXAMPLES: Record<CharacterStyle, Record<SelfieMode, string>> = {
+  photorealistic: {
+    direct:
+      "Photorealistic direct selfie, [scene matching current time and context], [1-2 background props supporting the scene], wearing [outfit appropriate for the situation], [lighting physically plausible for the scene], natural relaxed expression, medium close-up framing, natural skin texture, candid daily-life photo style, no studio glamour look",
+    mirror:
+      "Photorealistic mirror selfie, standing in front of [mirror location matching scene], wearing [outfit appropriate for the situation], phone clearly visible in hand, posture natural and relaxed, [background environment visible], [lighting physically plausible for the scene], mirror logic physically correct, authentic candid snapshot style",
+  },
+  anime: {
+    direct:
+      "Anime-style direct selfie, [scene matching current time and context], [1-2 background props supporting the scene], wearing [outfit appropriate for the situation], [lighting matching scene atmosphere], expressive face, medium close-up framing, consistent 2D anime look matching reference image style",
+    mirror:
+      "Anime-style mirror selfie, standing in front of [mirror location matching scene], wearing [outfit appropriate for the situation], phone clearly visible in hand, relaxed natural pose, [background environment visible], [lighting matching scene atmosphere], correct mirror reflection, consistent 2D anime look matching reference image style",
+  },
 };
 
 export async function prepareSelfie(options: PrepareSelfieOptions): Promise<PrepareResult> {
@@ -71,6 +94,7 @@ export async function prepareSelfie(options: PrepareSelfieOptions): Promise<Prep
     cwd,
   });
 
+  const style: CharacterStyle = character.meta.style ?? "photorealistic";
   const timeState = resolveTimeState(character.meta.timeStates, now);
 
   return {
@@ -85,10 +109,11 @@ export async function prepareSelfie(options: PrepareSelfieOptions): Promise<Prep
       requirements: MODE_REQUIREMENTS[mode],
     },
     promptGuide: {
-      requiredFields: REQUIRED_FIELDS,
-      rules: PROMPT_RULES,
+      style,
+      requiredFields: STYLE_REQUIRED_FIELDS[style],
+      rules: STYLE_RULES[style],
       wordRange: "50-80 english words",
-      example: MODE_EXAMPLES[mode],
+      example: STYLE_MODE_EXAMPLES[style][mode],
     },
   };
 }
