@@ -6,13 +6,13 @@ import type { CharacterAssets, CharacterMeta, CharacterListEntry } from "./types
 const REQUIRED_FILES = ["meta.json", "character-prompt.md"] as const;
 const REFERENCE_IMAGE_DIR = "images";
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
-const LEGACY_REFERENCE_NAMES = ["reference.png", "reference.jpg", "reference.jpeg", "reference.webp", "reference.gif"];
 
 export interface LoadCharacterAssetsOptions {
   characterId?: string;
   characterRoot?: string;
   userCharacterRoot?: string;
   cwd?: string;
+  allowMissingReference?: boolean;
 }
 
 function toMeta(value: unknown): CharacterMeta {
@@ -34,7 +34,7 @@ async function assertFileExists(filePath: string, label: string): Promise<void> 
   try {
     await fs.access(filePath);
   } catch {
-    throw new ClawMateError(`角色资产缺失: ${label}`, {
+    throw new ClawMateError(`Character asset missing: ${label}`, {
       code: "CHARACTER_ASSET_MISSING",
       details: { filePath, label },
     });
@@ -66,29 +66,15 @@ async function resolveReferenceImagePaths(characterDir: string, characterId: str
       return imagePaths;
     }
   } catch {
-    // fall through to legacy fallback
+    // treat missing images/ as no reference image
   }
 
-  const legacyPaths = LEGACY_REFERENCE_NAMES.map((name) => path.join(characterDir, name));
-  const existingLegacyPaths: string[] = [];
-  for (const filePath of legacyPaths) {
-    try {
-      await fs.access(filePath);
-      existingLegacyPaths.push(filePath);
-    } catch {
-      // continue checking next candidate
-    }
-  }
-  if (existingLegacyPaths.length > 0) {
-    return existingLegacyPaths;
-  }
-
-  throw new ClawMateError(`角色参考图缺失: ${characterId}`, {
+  throw new ClawMateError(`Character reference image missing: ${characterId}`, {
     code: "CHARACTER_ASSET_MISSING",
     details: {
       characterId,
       imageDir,
-      expected: `请在角色目录下创建 ${REFERENCE_IMAGE_DIR}/ 并放入至少 1 张图片`,
+      expected: `Please create ${REFERENCE_IMAGE_DIR}/ and add at least one image`,
     },
   });
 }
@@ -99,7 +85,7 @@ export async function loadCharacterAssets(options: LoadCharacterAssetsOptions = 
   const cwd = options.cwd ?? process.cwd();
 
   if (!characterId) {
-    throw new ClawMateError("未提供角色 id", {
+    throw new ClawMateError("Character id is required", {
       code: "CHARACTER_ID_REQUIRED",
     });
   }
@@ -120,7 +106,7 @@ export async function loadCharacterAssets(options: LoadCharacterAssetsOptions = 
   }
 
   if (!characterDir) {
-    throw new ClawMateError(`角色不存在: ${characterId}`, {
+    throw new ClawMateError(`Character not found: ${characterId}`, {
       code: "CHARACTER_NOT_FOUND",
       details: { characterId, searched: candidates },
     });
@@ -139,7 +125,7 @@ export async function loadCharacterAssets(options: LoadCharacterAssetsOptions = 
   try {
     meta = toMeta(JSON.parse(rawMeta));
   } catch (error) {
-    throw new ClawMateError(`角色 meta.json 解析失败: ${characterId}`, {
+    throw new ClawMateError(`Failed to parse character meta.json: ${characterId}`, {
       code: "CHARACTER_META_PARSE_ERROR",
       details: {
         characterId,
@@ -148,12 +134,20 @@ export async function loadCharacterAssets(options: LoadCharacterAssetsOptions = 
     });
   }
 
-  const referencePaths = await resolveReferenceImagePaths(characterDir, characterId);
+  let referencePaths: string[] = [];
+  try {
+    referencePaths = await resolveReferenceImagePaths(characterDir, characterId);
+  } catch (error) {
+    const allowMissingReference = options.allowMissingReference === true;
+    if (!allowMissingReference || !(error instanceof ClawMateError) || error.code !== "CHARACTER_ASSET_MISSING") {
+      throw error;
+    }
+  }
 
   return {
     id: characterId,
     characterDir,
-    referencePath: referencePaths[0],
+    referencePath: referencePaths[0] ?? "",
     referencePaths,
     characterPrompt: characterPrompt.trim(),
     meta,
@@ -167,7 +161,7 @@ export async function readReferenceImageBase64(referencePath: string): Promise<s
 
 export async function readReferenceImagesBase64(referencePaths: string[]): Promise<string[]> {
   if (!Array.isArray(referencePaths) || referencePaths.length === 0) {
-    throw new ClawMateError("参考图列表不能为空", {
+    throw new ClawMateError("Reference image list cannot be empty", {
       code: "CHARACTER_ASSET_MISSING",
     });
   }

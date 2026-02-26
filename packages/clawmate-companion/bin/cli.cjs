@@ -136,11 +136,14 @@ const T = {
     skipped: "已跳过",
     character_create_hint: "没有想要的角色？安装完成后，对 Agent 说「帮我创建一个新角色，她是一个[描述角色职业/性格/背景]」即可通过对话自建。",
     // providers
-    p_aliyun: "阿里云百炼",
-    p_volcengine: "火山引擎 ARK",
+    p_aliyun: "阿里云百炼（有免费额度）",
+    p_volcengine: "火山引擎 ARK（有免费额度）",
     p_fal: "fal.ai",
     p_openai: "OpenAI 兼容接口",
     p_mock: "Mock (仅测试，不需要 API Key)",
+    mscope_model_zimage: "Tongyi-MAI/Z-Image（不依赖参考图）",
+    mscope_model_edit: "Qwen/Qwen-Image-Edit-2511（依赖参考图，生成时间较长）",
+    provider_recommend: "建议优先使用谷歌 Banana",
     f_select_model: "选择模型",
     f_custom_model: "输入自定义模型名称: ",
     f_custom_endpoint: "输入自定义模型 Endpoint ID: ",
@@ -207,11 +210,14 @@ const T = {
     skipped: "Skipped",
     character_create_hint: "Don't see the character you want? After installation, tell your Agent \"help me create a new character, she is a [describe occupation/personality/background]\" to build one through conversation.",
     // providers
-    p_aliyun: "Alibaba Cloud Bailian",
-    p_volcengine: "Volcengine ARK",
+    p_aliyun: "Alibaba Cloud Bailian (free quota available)",
+    p_volcengine: "Volcengine ARK (free quota available)",
     p_fal: "fal.ai",
     p_openai: "OpenAI Compatible",
     p_mock: "Mock (testing only, no API Key needed)",
+    mscope_model_zimage: "Tongyi-MAI/Z-Image (no reference image required)",
+    mscope_model_edit: "Qwen/Qwen-Image-Edit-2511 (requires reference image, longer generation)",
+    provider_recommend: "Recommendation: prefer Google Banana",
     f_select_model: "Select model",
     f_custom_model: "Enter custom model name: ",
     f_custom_endpoint: "Enter custom model Endpoint ID: ",
@@ -262,6 +268,32 @@ function getProviders() {
       ],
       buildConfig(answers) {
         return { type: "volcengine", apiKey: answers.apiKey, model: answers.model };
+      },
+    },
+    modelscope: {
+      label: lang === "en" ? "ModelScope (fully free, slower)" : "ModelScope（完全免费，但速度较慢）",
+      fields: [
+        { key: "apiKey", prompt: "ModelScope Token", secret: true, required: true },
+        {
+          key: "model",
+          prompt: t("f_select_model"),
+          choices: [
+            { value: "Tongyi-MAI/Z-Image", label: t("mscope_model_zimage") },
+            { value: "Qwen/Qwen-Image-Edit-2511", label: t("mscope_model_edit") },
+          ],
+          allowCustom: true,
+          customPrompt: t("f_custom_model"),
+        },
+      ],
+      buildConfig(answers) {
+        return {
+          type: "modelscope",
+          apiKey: answers.apiKey,
+          baseUrl: "https://api-inference.modelscope.cn/v1",
+          model: answers.model,
+          pollIntervalMs: 1000,
+          pollTimeoutMs: 300000,
+        };
       },
     },
     fal: {
@@ -623,6 +655,7 @@ async function chooseCharacter() {
 // ── Step 3: Choose provider ─────────────────────────────────────────────────
 async function chooseProvider() {
   logStep("4/6", t("step_provider"));
+  logInfo(t("provider_recommend"));
 
   const existing = readExistingPluginConfig();
   const currentProvider = existing?.defaultProvider;

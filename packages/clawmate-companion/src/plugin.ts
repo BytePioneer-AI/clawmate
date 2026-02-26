@@ -416,6 +416,7 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
         characterRoot: config.characterRoot,
         userCharacterRoot: config.userCharacterRoot,
         cwd: pluginRoot,
+        allowMissingReference: true,
       });
       const personaText = character.characterPrompt;
 

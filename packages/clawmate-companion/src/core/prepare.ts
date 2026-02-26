@@ -92,6 +92,7 @@ export async function prepareSelfie(options: PrepareSelfieOptions): Promise<Prep
     characterRoot: config.characterRoot,
     userCharacterRoot: config.userCharacterRoot,
     cwd,
+    allowMissingReference: true,
   });
 
   const style: CharacterStyle = character.meta.style ?? "photorealistic";

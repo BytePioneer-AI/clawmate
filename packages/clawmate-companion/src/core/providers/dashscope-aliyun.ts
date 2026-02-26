@@ -212,7 +212,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
       ? payload.referenceImageDataUrls
       : [payload.referenceImageDataUrl],
   );
-  return fallback.length > 0 ? fallback : [payload.referenceImageDataUrl];
+  return fallback;
 }
 
 function buildRequestBody(config: NormalizedConfig, payload: GenerateRequest): Record<string, unknown> {

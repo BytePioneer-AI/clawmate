@@ -42,6 +42,32 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function toFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function resolveProviderPollOptions(
+  config: ClawMateConfig,
+  providerName: string,
+): { pollIntervalMs: number; pollTimeoutMs: number } {
+  const providerConfig = config.providers?.[providerName];
+  if (!providerConfig || typeof providerConfig !== "object" || Array.isArray(providerConfig)) {
+    return {
+      pollIntervalMs: config.pollIntervalMs,
+      pollTimeoutMs: config.pollTimeoutMs,
+    };
+  }
+
+  const record = providerConfig as Record<string, unknown>;
+  const providerPollIntervalMs = toFiniteNumber(record.pollIntervalMs ?? record.poll_interval_ms);
+  const providerPollTimeoutMs = toFiniteNumber(record.pollTimeoutMs ?? record.poll_timeout_ms);
+
+  return {
+    pollIntervalMs: providerPollIntervalMs !== null && providerPollIntervalMs > 0 ? providerPollIntervalMs : config.pollIntervalMs,
+    pollTimeoutMs: providerPollTimeoutMs !== null && providerPollTimeoutMs > 0 ? providerPollTimeoutMs : config.pollTimeoutMs,
+  };
+}
+
 function imageMimeType(referencePath: string): string {
   const ext = path.extname(referencePath).toLowerCase();
   if (ext === ".png") {
@@ -96,16 +122,23 @@ export async function generateSelfie(options: GenerateSelfieOptions = {}): Promi
     characterRoot: config.characterRoot,
     userCharacterRoot: config.userCharacterRoot,
     cwd: options.cwd ?? process.cwd(),
+    allowMissingReference: true,
   });
 
-  const referencePaths = character.referencePaths.length > 0 ? character.referencePaths : [character.referencePath];
-  const referenceImageBase64List = await readReferenceImagesBase64(referencePaths);
+  const referencePaths = (character.referencePaths ?? []).filter((referencePath) => typeof referencePath === "string" && referencePath.trim().length > 0);
+  const referenceImageBase64List = referencePaths.length > 0 ? await readReferenceImagesBase64(referencePaths) : [];
   const referenceImageDataUrls = referenceImageBase64List.map((base64, index) => {
-    const mimeType = imageMimeType(referencePaths[index] ?? referencePaths[0] ?? character.referencePath);
+    const mimeType = imageMimeType(referencePaths[index] ?? referencePaths[0] ?? "");
     return `data:${mimeType};base64,${base64}`;
   });
-  const referenceImageBase64 = referenceImageBase64List[0];
-  const referenceImageDataUrl = referenceImageDataUrls[0];
+  const referenceImageBase64 = referenceImageBase64List[0] ?? "";
+  const referenceImageDataUrl = referenceImageDataUrls[0] ?? "";
+
+  if (referencePaths.length === 0) {
+    logger.warn("角色缺少参考图，降级为纯提示词生图", {
+      characterId,
+    });
+  }
 
   const timeState = resolveTimeState(character.meta.timeStates, now);
   const resolvedMode: SelfieMode = options.mode ?? "direct";
@@ -126,7 +159,7 @@ export async function generateSelfie(options: GenerateSelfieOptions = {}): Promi
     characterId,
     prompt,
     mode: resolvedMode,
-    referencePath: referencePaths[0],
+    referencePath: referencePaths[0] ?? character.referencePath ?? "",
     referencePaths,
     referenceImageBase64,
     referenceImageBase64List,
@@ -149,6 +182,7 @@ export async function generateSelfie(options: GenerateSelfieOptions = {}): Promi
       });
       continue;
     }
+    const pollOptions = resolveProviderPollOptions(config, providerName);
 
     let attemptError: unknown = null;
     for (let attempt = 1; attempt <= config.retry.maxAttempts; attempt += 1) {
@@ -162,10 +196,7 @@ export async function generateSelfie(options: GenerateSelfieOptions = {}): Promi
           prompt: request.prompt,
         });
 
-        const generateResult = await provider.generate(request, {
-          pollIntervalMs: config.pollIntervalMs,
-          pollTimeoutMs: config.pollTimeoutMs,
-        });
+        const generateResult = await provider.generate(request, pollOptions);
         const requestId = generateResult.requestId ?? null;
         const imageUrl = generateResult.imageUrl ?? null;
         if (!imageUrl) {

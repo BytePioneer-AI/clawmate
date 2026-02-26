@@ -5,6 +5,7 @@ import { createOpenAICompatibleProvider } from "./openai-compatible";
 import { createVolcengineArkProvider } from "./volcengine-ark";
 import { createDashScopeAliyunProvider } from "./dashscope-aliyun";
 import { createFalProvider } from "./fal";
+import { createModelScopeProvider } from "./modelscope";
 import type { ProviderAdapter, ProviderConfig, ProviderRegistry, ProvidersConfig } from "../types";
 
 interface NamedProviderConfig extends ProviderConfig {
@@ -20,6 +21,7 @@ const PROVIDER_TYPE_ALIASES: Record<string, string> = {
   aliyun: "aliyun",
   fal: "fal",
   "http-async": "http-async",
+  modelscope: "modelscope",
 };
 
 function normalizeText(value: unknown): string | null {
@@ -57,6 +59,9 @@ function inferProviderType(config: NamedProviderConfig, hasAsyncSubmitPollConfig
     ) {
       return "aliyun";
     }
+    if (normalizedBaseUrl.includes("api-inference.modelscope.cn")) {
+      return "modelscope";
+    }
     if (endpoint.includes("/images/edits")) {
       return "openai-compatible";
     }
@@ -92,6 +97,8 @@ function createProvider(config: NamedProviderConfig, fetchImpl?: typeof fetch): 
     provider = createDashScopeAliyunProvider(config, fetchImpl);
   } else if (type === "openai-compatible") {
     provider = createOpenAICompatibleProvider(config, fetchImpl);
+  } else if (type === "modelscope") {
+    provider = createModelScopeProvider(config, fetchImpl);
   } else if (type === "fal") {
     provider = createFalProvider(config, fetchImpl);
   } else if (type === "http-async") {

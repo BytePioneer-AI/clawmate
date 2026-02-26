@@ -1,7 +1,16 @@
 import OpenAI, { APIConnectionError, APIConnectionTimeoutError, APIError } from "openai";
 import { ProviderError } from "../errors";
 import type { GenerateRequest, ProviderAdapter, ProviderConfig } from "../types";
-import { asRecord, asStringRecord, toFiniteNumber, toOptionalString, hasOwn, isLikelyBase64, asImageDataUrl } from "./shared";
+import {
+  asRecord,
+  asStringRecord,
+  toFiniteNumber,
+  toOptionalString,
+  hasOwn,
+  isLikelyBase64,
+  asImageDataUrl,
+  dedupeNonEmptyStrings,
+} from "./shared";
 
 interface OpenAICompatibleProviderConfig extends ProviderConfig {
   name: string;
@@ -190,10 +199,11 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
   if (resolved.size > 0) {
     return Array.from(resolved);
   }
-  if (Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0) {
-    return payload.referenceImageDataUrls;
-  }
-  return [payload.referenceImageDataUrl];
+  return dedupeNonEmptyStrings(
+    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
+      ? payload.referenceImageDataUrls
+      : [payload.referenceImageDataUrl],
+  );
 }
 
 function buildChatBody(

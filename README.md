@@ -111,6 +111,21 @@ npm run clawmate:setup
 
 在 `~/.openclaw/openclaw.json` 的 `plugins.entries.clawmate-companion.config` 下配置：
 
+### 服务特点与选型建议
+> - 写实风格建议使用 Nano Banana。  
+> - 除 Nano Banana 外，其他模型更建议搭配动漫角色。
+
+| 服务 | 费用特性 |
+| --- | --- |
+| ModelScope | 完全免费 |
+| 阿里云百炼 | 有免费额度（以官方控制台为准） |
+| 火山引擎 ARK | 有免费额度（以官方控制台为准） |
+| OpenAI 兼容接口 | 取决于接入服务商 |
+| fal.ai | 取决于平台计费策略 |
+
+
+
+
 **OpenAI 兼容接口**
 ```json
 {

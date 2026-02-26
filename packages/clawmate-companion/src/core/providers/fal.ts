@@ -186,7 +186,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
       ? payload.referenceImageDataUrls
       : [payload.referenceImageDataUrl],
   );
-  return fallback.length > 0 ? fallback : [payload.referenceImageDataUrl];
+  return fallback;
 }
 
 function buildRequestBody(config: NormalizedConfig, payload: GenerateRequest): Record<string, unknown> {
@@ -205,7 +205,7 @@ function buildRequestBody(config: NormalizedConfig, payload: GenerateRequest): R
     body[config.promptField] = prompt;
   }
   const referenceImages = resolveReferenceImages(body, payload);
-  if (!hasOwn(body, config.imageField)) {
+  if (!hasOwn(body, config.imageField) && referenceImages.length > 0) {
     body[config.imageField] = referenceImages.length === 1 ? referenceImages[0] : referenceImages;
   }
   if (!hasOwn(body, "num_images") && config.numImages !== null) {

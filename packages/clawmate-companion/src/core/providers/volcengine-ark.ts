@@ -134,7 +134,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
       ? payload.referenceImageDataUrls
       : [payload.referenceImageDataUrl],
   );
-  return fallback.length > 0 ? fallback : [payload.referenceImageDataUrl];
+  return fallback;
 }
 
 function normalizeConfig(config: VolcengineArkProviderConfig): NormalizedConfig {
@@ -186,7 +186,7 @@ function buildRequestBody(config: NormalizedConfig, payload: GenerateRequest): R
   };
 
   const referenceImages = resolveReferenceImages(body, payload);
-  if (!hasOwn(body, "image")) {
+  if (!hasOwn(body, "image") && referenceImages.length > 0) {
     const limited = referenceImages.slice(0, 14);
     body.image = limited.length <= 1 ? limited[0] : limited;
   }

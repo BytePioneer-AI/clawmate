@@ -15,7 +15,7 @@ She knows what time it is and what you're doing. Ask her where she is, and she'l
 - **Proactive Selfies** — Configurable trigger frequency, randomly sends selfies during casual chats to show care
 - **Multiple Characters** — Each character has independent persona, time states, and reference images, switchable via configuration
 - **Custom Characters** — Create custom characters through conversation, LLM guides generation of complete character definitions and saves to disk
-- **Multiple Image Services** — Supports Alibaba Cloud Bailian, Volcengine ARK, fal.ai, OpenAI-compatible endpoints
+- **Multiple Image Services** — Supports Alibaba Cloud Bailian, Volcengine ARK, ModelScope, fal.ai, OpenAI-compatible endpoints
 
 ## Use Cases
 
@@ -111,6 +111,29 @@ npm run clawmate:plugin:check
 ## Image Service Configuration
 
 Configure under `plugins.entries.clawmate-companion.config` in `~/.openclaw/openclaw.json`:
+
+**ModelScope (Recommended: Qwen-Image-Edit)**
+
+```json
+{
+  "defaultProvider": "modelscope",
+  "providers": {
+    "modelscope": {
+      "type": "modelscope",
+      "baseUrl": "https://api-inference.modelscope.cn/v1",
+      "apiKey": "YOUR_MODELSCOPE_TOKEN",
+      "model": "Qwen/Qwen-Image-Edit-2511",
+      "pollIntervalMs": 1000,
+      "pollTimeoutMs": 300000
+    }
+  }
+}
+```
+
+Notes:
+- ModelScope image generation/edit runs in async mode. The `modelscope` provider automatically submits and polls task results.
+- Keep reference images under 5MB (ModelScope API limit).
+- Keeping the reference image long side at or below 1664 helps reduce task failures.
 
 **OpenAI-Compatible Endpoint**
 
