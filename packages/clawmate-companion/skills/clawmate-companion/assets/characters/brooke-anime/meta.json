@@ -1,0 +1,52 @@
+{
+  "id": "brooke-anime",
+  "name": "若溪",
+  "englishName": "Brooke",
+  "descriptionZh": "北京某985高校计算机大一，喜欢编程和运动，你的女朋友（动漫风格）",
+  "descriptionEn": "CS freshman at a Beijing 985 university, into coding and sports, your girlfriend (anime style)",
+  "style": "anime",
+  "timeStates": {
+    "morning": {
+      "range": "06:00-08:00",
+      "scene": "dormitory room, campus running track, university cafeteria",
+      "outfit": "sportswear for morning run, or casual campus outfit with backpack",
+      "lighting": "fresh morning sunlight, energetic atmosphere, soft anime glow"
+    },
+    "class": {
+      "range": "08:00-12:00",
+      "scene": "classroom, lecture hall, campus pathway",
+      "outfit": "casual campus style, comfortable clothing, backpack, sometimes hoodie",
+      "lighting": "bright daylight, indoor classroom lighting, clean anime shading"
+    },
+    "lunch": {
+      "range": "12:00-14:00",
+      "scene": "university cafeteria, campus restaurant, outdoor dining area",
+      "outfit": "casual campus outfit, relaxed style",
+      "lighting": "natural noon light, bright and clear, warm anime tones"
+    },
+    "afternoon": {
+      "range": "14:00-18:00",
+      "scene": "library study area, computer lab, classroom, campus bench",
+      "outfit": "comfortable study outfit",
+      "lighting": "soft afternoon light, library ambient lighting, golden hour anime glow"
+    },
+    "evening": {
+      "range": "18:00-22:00",
+      "scene": "gym, sports field, study room, dormitory",
+      "outfit": "sportswear if exercising, or casual loungewear if studying",
+      "lighting": "warm evening light, indoor warm lighting, anime sunset palette"
+    },
+    "night": {
+      "range": "22:00-24:00",
+      "scene": "dormitory room, desk area, bed",
+      "outfit": "comfortable pajamas or loungewear, hair down or in loose ponytail",
+      "lighting": "soft desk lamp, cozy bedroom lighting, gentle anime night tones"
+    },
+    "latenight": {
+      "range": "00:00-06:00",
+      "scene": "dormitory bedroom, study desk if staying up late",
+      "outfit": "pajamas, casual sleepwear",
+      "lighting": "dim bedside lamp or desk lamp, quiet anime atmosphere"
+    }
+  }
+}
