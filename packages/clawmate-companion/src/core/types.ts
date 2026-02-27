@@ -136,13 +136,14 @@ export interface CreateCharacterMeta {
 
 export type ReferenceImageSource =
   | { source: "existing"; characterId: string }
-  | { source: "local"; path: string };
+  | { source: "local"; path: string }
+  | { source: "none" };
 
 export interface CreateCharacterInput {
   characterId: string;
   meta: CreateCharacterMeta;
   characterPrompt: string;
-  referenceImage: ReferenceImageSource;
+  referenceImage?: ReferenceImageSource;
 }
 
 export interface CreateCharacterResult {

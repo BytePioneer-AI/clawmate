@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -d d:/work/code/clawmate/packages/clawmate-companion/skills/clawmate-companion/assets/characters/*/)",
+      "Bash(node -e \":*)",
+      "Bash(node fix-nextstep.cjs)",
+      "Bash(npx tsc --noEmit --project packages/clawmate-companion/tsconfig.json)",
+      "Bash(npx tsc --noEmit)"
+    ]
+  }
+}

@@ -42,8 +42,11 @@ function validateCreateInput(input: CreateCharacterInput): void {
   }
 
   const ref = input.referenceImage;
-  if (!ref || typeof ref !== "object") {
-    throw new ClawMateError("referenceImage 不能为空", { code: "REFERENCE_IMAGE_REQUIRED" });
+  if (!ref) {
+    return;
+  }
+  if (typeof ref !== "object") {
+    throw new ClawMateError("referenceImage 格式无效", { code: "INVALID_REFERENCE_SOURCE" });
   }
   if (ref.source === "existing") {
     if (!ref.characterId || typeof ref.characterId !== "string") {
@@ -53,8 +56,10 @@ function validateCreateInput(input: CreateCharacterInput): void {
     if (!ref.path || typeof ref.path !== "string") {
       throw new ClawMateError("referenceImage.path 不能为空", { code: "REFERENCE_IMAGE_PATH_REQUIRED" });
     }
+  } else if (ref.source === "none") {
+    return;
   } else {
-    throw new ClawMateError('referenceImage.source 必须是 "existing" 或 "local"', { code: "INVALID_REFERENCE_SOURCE" });
+    throw new ClawMateError('referenceImage.source 必须是 "existing"、"local" 或 "none"', { code: "INVALID_REFERENCE_SOURCE" });
   }
 }
 
@@ -65,6 +70,9 @@ async function resolveReferenceSourcePath(
   cwd: string | undefined,
 ): Promise<string> {
   const ref = input.referenceImage;
+  if (!ref || ref.source === "none") {
+    return "";
+  }
   if (ref.source === "existing") {
     const assets = await loadCharacterAssets({
       characterId: ref.characterId,
@@ -116,23 +124,28 @@ export async function createCharacter(options: CreateCharacterOptions): Promise<
   const sourcePath = await resolveReferenceSourcePath(input, characterRoot, userCharacterRoot, cwd);
 
   await fs.mkdir(targetDir, { recursive: true });
-  const imageDir = path.join(targetDir, "images");
-  await fs.mkdir(imageDir, { recursive: true });
 
   const metaPath = path.join(targetDir, "meta.json");
   const promptPath = path.join(targetDir, "character-prompt.md");
-  const refFileName = normalizeReferenceFileName(sourcePath);
-  const refPath = path.join(imageDir, refFileName);
 
   const metaJson = JSON.stringify(input.meta, null, 2) + "\n";
   await fs.writeFile(metaPath, metaJson, "utf8");
   await fs.writeFile(promptPath, input.characterPrompt.trim() + "\n", "utf8");
-  await fs.copyFile(sourcePath, refPath);
+  const files = ["meta.json", "character-prompt.md"];
+
+  if (sourcePath) {
+    const imageDir = path.join(targetDir, "images");
+    await fs.mkdir(imageDir, { recursive: true });
+    const refFileName = normalizeReferenceFileName(sourcePath);
+    const refPath = path.join(imageDir, refFileName);
+    await fs.copyFile(sourcePath, refPath);
+    files.push(`images/${refFileName}`);
+  }
 
   return {
     ok: true,
     characterId: input.characterId,
     characterDir: targetDir,
-    files: ["meta.json", "character-prompt.md", `images/${refFileName}`],
+    files,
   };
 }

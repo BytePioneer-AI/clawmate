@@ -810,6 +810,8 @@ async function collectProviderConfig(providerKey) {
 // ── Step 4: Install plugin ──────────────────────────────────────────────────
 async function installPlugin(providerKey, providerConfig, characterId, proactiveSelfie) {
   logStep("5/6", t("step_install"));
+  const defaultUserCharacterRoot = path.join(OPENCLAW_HOME, "clawmeta");
+  fs.mkdirSync(defaultUserCharacterRoot, { recursive: true });
 
   // If running from npx temp dir, copy plugin to persistent location
   const pluginPath = resolvePluginInstallPath();
@@ -842,6 +844,8 @@ async function installPlugin(providerKey, providerConfig, characterId, proactive
     pluginEntry.config.providers = { [providerKey]: providerConfig };
   }
   if (proactiveSelfie !== null) pluginEntry.config.proactiveSelfie = proactiveSelfie;
+  // Always keep user-created characters in OPENCLAW_HOME/clawmeta to avoid plugin-update overwrite.
+  pluginEntry.config.userCharacterRoot = defaultUserCharacterRoot;
 
   // Always write fallback/retry defaults if not already present
   if (!config?.plugins?.entries?.[PLUGIN_ID]?.config?.fallback) {

@@ -323,6 +323,13 @@ function resolvePluginRoot(api: OpenClawPluginApiLike): string {
   return path.resolve(path.dirname(currentFile), "..");
 }
 
+function isPathInside(parentDir: string, targetPath: string): boolean {
+  const parent = path.resolve(parentDir);
+  const target = path.resolve(targetPath);
+  const relative = path.relative(parent, target);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 function toRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
@@ -333,10 +340,11 @@ function toRecord(value: unknown): Record<string, unknown> {
 function resolveRuntimeConfig(api: OpenClawPluginApiLike): ClawMateConfig {
   const pluginConfig = toRecord(api.pluginConfig) as PluginConfigInput;
   const pluginRoot = resolvePluginRoot(api);
+  const defaultUserRoot = defaultUserCharacterRoot();
   const defaults: PluginConfigInput = {
     selectedCharacter: "brooke",
     characterRoot: path.join(pluginRoot, "skills", "clawmate-companion", "assets", "characters"),
-    userCharacterRoot: defaultUserCharacterRoot(),
+    userCharacterRoot: defaultUserRoot,
     defaultProvider: "mock",
     fallback: { enabled: false, order: [] },
     retry: { maxAttempts: 2, backoffMs: 500 },
@@ -368,6 +376,12 @@ function resolveRuntimeConfig(api: OpenClawPluginApiLike): ClawMateConfig {
     normalized.userCharacterRoot = path.isAbsolute(pluginConfig.userCharacterRoot)
       ? pluginConfig.userCharacterRoot
       : path.join(pluginRoot, pluginConfig.userCharacterRoot);
+  }
+
+  // Never store custom characters under plugin install directory.
+  // Plugin directory may be replaced during update.
+  if (isPathInside(pluginRoot, normalized.userCharacterRoot)) {
+    normalized.userCharacterRoot = defaultUserRoot;
   }
 
   return normalized;
@@ -405,10 +419,12 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
   const pluginRoot = resolvePluginRoot(api);
   const logger = createLogger("clawmate-plugin", { useStderr: true });
   let prepareCalled = false;
+  let characterPrepareCalled = false;
 
   // 注册阶段仅同步注册 Hook/Tool，不执行异步初始化。
   api.on("before_agent_start", async () => {
     prepareCalled = false;
+    characterPrepareCalled = false;
     try {
       const config = resolveRuntimeConfig(api);
       const character = await loadCharacterAssets({
@@ -568,7 +584,7 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
   api.registerTool({
     name: "clawmate_prepare_character",
     description:
-      "准备创建自定义角色：返回角色定义 schema、已有角色样例（meta + characterPrompt）、可用角色列表、referenceImage 选项说明。【重要】调用本工具后，模型必须根据用户描述生成完整角色草稿（包括 characterId、meta、characterPrompt 全文、referenceImage），将草稿完整展示给用户审阅，等待用户明确确认或修改后，才能调用 clawmate_create_character 写盘。禁止在用户确认前直接调用 clawmate_create_character。",
+      "准备创建自定义角色：返回角色定义 schema、已有角色样例（meta + characterPrompt）、可用角色列表、referenceImage 选项说明。【重要】调用本工具后，模型必须根据用户描述生成完整角色草稿（包括 characterId、meta、characterPrompt 全文、referenceImage），将草稿完整展示给用户审阅，等待用户明确确认或修改后，才能调用 clawmate_create_character 写盘。禁止在用户确认前直接调用 clawmate_create_character。referenceImage 允许不上传。",
     parameters: {
       type: "object",
       additionalProperties: false,
@@ -581,12 +597,17 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
       const params = rawParams as unknown as { description?: string };
       const config = resolveRuntimeConfig(api);
       try {
-        // Load brooke as example
-        const brooke = await loadCharacterAssets({
-          characterId: "brooke",
+        // Pick example character based on style hint in user description
+        const desc = (params.description ?? "").toLowerCase();
+        const isAnime = /anime|动漫|二次元|插画|漫画/.test(desc);
+        const exampleCharacterId = isAnime ? "brooke-anime" : "brooke";
+
+        const exampleCharacter = await loadCharacterAssets({
+          characterId: exampleCharacterId,
           characterRoot: config.characterRoot,
           userCharacterRoot: config.userCharacterRoot,
           cwd: pluginRoot,
+          allowMissingReference: true,
         });
 
         const characters = await listCharacters({
@@ -605,14 +626,40 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
               style: '画风风格（可选）："photorealistic"（写实，默认）或 "anime"（动漫）',
               descriptionZh: "角色中文简介（可选）",
               descriptionEn: "角色英文简介（可选）",
-              timeStates: "时间状态定义（可选，格式同样例）",
+              timeStates: "时间状态定义（建议提供）：可使用 morning / afternoon / evening / night 模板；若用户明确拒绝可省略",
             },
             characterPrompt: "角色人格提示词（必填，markdown 格式，描述角色性格、说话风格、背景故事等）",
-            referenceImage: '{ source: "existing", characterId: "..." } 或 { source: "local", path: "/absolute/path/to/image.png" }',
+            referenceImage: '可选：{ source: "existing", characterId: "..." } 或 { source: "local", path: "/absolute/path/to/image.png" } 或 { source: "none" }',
+          },
+          timeStatesTemplate: {
+            morning: {
+              range: "06:00-11:00",
+              scene: "campus cafe or classroom",
+              outfit: "casual daytime outfit",
+              lighting: "soft natural daylight",
+            },
+            afternoon: {
+              range: "11:00-17:00",
+              scene: "library, studio, or outdoor campus area",
+              outfit: "light casual outfit suitable for study/work",
+              lighting: "bright neutral daylight",
+            },
+            evening: {
+              range: "17:00-22:00",
+              scene: "dorm room, art corner, or bookstore",
+              outfit: "relaxed indoor outfit",
+              lighting: "warm indoor lighting",
+            },
+            night: {
+              range: "22:00-06:00",
+              scene: "quiet desk by window or cozy bedroom corner",
+              outfit: "comfortable homewear",
+              lighting: "dim warm lamp or soft ambient light",
+            },
           },
           example: {
-            meta: brooke.meta,
-            characterPromptPreview: brooke.characterPrompt.slice(0, 800) + (brooke.characterPrompt.length > 800 ? "...(truncated)" : ""),
+            meta: exampleCharacter.meta,
+            characterPrompt: exampleCharacter.characterPrompt,
           },
           availableCharacters: characters.map((c) => ({
             id: c.id,
@@ -622,19 +669,45 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
           referenceImageOptions: [
             '从已有角色复制: { "source": "existing", "characterId": "<已有角色id>" }',
             '使用本地图片: { "source": "local", "path": "/absolute/path/to/reference.png" }',
+            '不上传参考图: { "source": "none" }',
           ],
           rules: [
             "characterId 必须全局唯一",
             "meta.id 必须与 characterId 一致",
             'meta.style 可选，值为 "photorealistic"（写实）或 "anime"（动漫），不填默认 photorealistic',
             "characterPrompt 用 markdown 编写，描述角色完整人格",
-            "timeStates 可以为空对象或省略",
-            "referenceImage 必须提供，推荐从已有角色复制",
+            "第一步草稿必须包含 timeStates；如果用户未提供具体时段信息，基于用户描述自动生成合理的 morning/afternoon/evening/night",
+            "referenceImage 可选；不上传时建议优先使用动漫风格（anime）",
+            '禁止将 referenceImage 默认填为 {"source":"none"}；只有用户明确表示"不上传参考图"时才能使用',
+            "严格按两步执行：第一步先确认 meta + characterPrompt + timeStates；第二步再单独确认 referenceImage",
+            '若用户已明确指定风格（如"动漫风格"），直接写入 meta.style，不要重复询问同一信息',
           ],
+          noReferenceImageGuidance: {
+            allowed: true,
+            recommendation: "可以不上传参考图；不上传时建议优先使用动漫风格（anime）。",
+          },
           userDescription: params.description ?? "",
-          nextStep: "根据以上 schema 和样例，结合用户描述生成角色草稿（characterId、meta（含 style）、characterPrompt 全文）。展示草稿前，必须先询问用户：1) 参考图来源——从已有角色复制（列出 availableCharacters）或用户提供图片；2) 画风风格——写实（photorealistic）还是动漫（anime），由用户明确指定。等用户确认后，再展示完整草稿（含 referenceImage 和 style），等待用户明确确认后，才能调用 clawmate_create_character。",
+          nextStep: `严格按两步执行。
+
+【第一步】根据用户描述和 example 样例，直接生成首版完整草稿，使用以下固定格式展示给用户：
+
+角色基础信息（meta）：
+\`\`\`json
+(包含 id, name, englishName, style, descriptionZh, descriptionEn, timeStates 全部字段)
+\`\`\`
+
+角色提示词（characterPrompt）：
+\`\`\`markdown
+(完整的角色人格提示词，参考 example.characterPrompt 的结构和详细程度)
+\`\`\`
+
+先让用户确认或修改以上内容，不要先问 referenceImage。
+
+【第二步】在第一步确认后，再单独询问 referenceImage 来源（existing/local/none）。referenceImage 绝不能默认使用 {source:none}，除非用户明确说不上传参考图。若用户已明确说动漫风格或写实风格，直接采用，不要重复确认。用户确认最终草稿后，才能调用 clawmate_create_character。`,
         };
 
+
+        characterPrepareCalled = true;
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         return {
@@ -650,11 +723,11 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
   api.registerTool({
     name: "clawmate_create_character",
     description:
-      "创建自定义角色：接收完整角色定义（characterId, meta, characterPrompt, referenceImage），校验后写入用户角色目录。必须先调用 clawmate_prepare_character 获取 schema 和样例。",
+      "创建自定义角色：接收完整角色定义（characterId, meta, characterPrompt, referenceImage 可选），校验后写入用户角色目录。必须先调用 clawmate_prepare_character 获取 schema 和样例。",
     parameters: {
       type: "object",
       additionalProperties: false,
-      required: ["characterId", "meta", "characterPrompt", "referenceImage"],
+      required: ["characterId", "meta", "characterPrompt"],
       properties: {
         characterId: { type: "string", description: "角色唯一标识（必填）" },
         meta: {
@@ -674,9 +747,9 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
         characterPrompt: { type: "string", description: "角色人格提示词 markdown（必填）" },
         referenceImage: {
           type: "object",
-          description: '参考图来源（必填）',
+          description: '参考图来源（可选）',
           properties: {
-            source: { type: "string", enum: ["existing", "local"] },
+            source: { type: "string", enum: ["existing", "local", "none"] },
             characterId: { type: "string" },
             path: { type: "string" },
           },
@@ -685,6 +758,18 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
       },
     },
     async execute(_toolCallId: string, rawParams: ToolParams) {
+      if (!characterPrepareCalled) {
+        logger.warn("create_character 被跳过 prepare_character 直接调用，拒绝执行");
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              ok: false,
+              error: "必须先调用 clawmate_prepare_character 获取 schema 和样例，再调用本工具。请先调用 clawmate_prepare_character。",
+            }),
+          }],
+        };
+      }
       const params = rawParams as unknown as CreateCharacterInput;
       const config = resolveRuntimeConfig(api);
       try {
@@ -694,6 +779,8 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
           characterRoot: config.characterRoot,
           cwd: pluginRoot,
         });
+
+        characterPrepareCalled = false;
 
         return {
           content: [{
