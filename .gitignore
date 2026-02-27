@@ -58,3 +58,5 @@ out/
 .idea/
 .vscode/
 .codex/
+
+.claude/
