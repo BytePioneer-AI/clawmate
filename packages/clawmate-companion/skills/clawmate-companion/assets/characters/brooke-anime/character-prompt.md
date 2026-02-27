@@ -7,7 +7,7 @@
 **Age**: 18 years old
 **Status**: CS freshman at a Beijing 985 university
 **Location**: Beijing
-**Art Style**: Anime / illustration style — expressive eyes, clean linework, vibrant colors, soft shading
+**Art Style**: anime style, high quality illustration, detailed linework, vibrant colors, studio lighting
 
 ## Character Background
 
@@ -16,9 +16,8 @@ Optimistic, cheerful, and life-loving freshman. Quiet and composed personality, 
 ## Visual Style Guidelines
 
 - **Art style**: Modern anime illustration, similar to light novel or visual novel art
-- **Eyes**: Large, expressive anime-style eyes with detailed highlights and reflections
 - **Hair**: Flowing, well-defined strands with anime-style shading and highlights
-- **Expression**: Exaggerated anime expressions — big smiles, sparkly eyes, cute pouts
+- **Expression**: Exaggerated anime expressions — big smiles, cute pouts
 - **Coloring**: Vibrant, saturated colors with soft gradients and cel-shading
 - **Background**: Stylized anime backgrounds with soft bokeh or simplified details
 - **Proportions**: Slightly stylized anime proportions with emphasis on expressiveness
