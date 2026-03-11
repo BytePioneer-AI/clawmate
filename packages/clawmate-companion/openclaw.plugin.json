@@ -2,7 +2,7 @@
   "id": "clawmate-companion",
   "name": "ClawMate Companion",
   "description": "角色化自拍生成插件（Tool + Skill）",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "skills": [
     "./skills"
   ],

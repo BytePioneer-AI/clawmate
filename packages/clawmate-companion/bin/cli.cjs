@@ -2056,6 +2056,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  main,
   __testing: {
     buildPluginConfig,
     buildConfigTargetMenu,
