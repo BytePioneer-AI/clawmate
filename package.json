@@ -1,6 +1,6 @@
 {
   "name": "@clawmate/clawmate",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "One-click installer for the ClawMate OpenClaw companion plugin",
   "license": "MIT",
   "type": "commonjs",
