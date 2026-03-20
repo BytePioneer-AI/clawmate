@@ -63,8 +63,10 @@ clawmate_generate_tts({
 ### On success
 
 1. Do not send the same content as visible text
-2. The tool returns a local audio path in `audioPath`
-3. Use the audio referenced by that path and send it to the user
+2. If `delivery.delivered` is `true`, the plugin has already sent the voice message directly, so do not send it again
+3. If `delivery.delivered` is not `true`, the tool returns a local audio path in `audioPath`
+4. You must immediately use that path to send the voice message to the user
+5. If `nextAction = use_audio_path_to_send_voice` is present, follow it literally and do not just repeat the path
 
 ### On failure
 

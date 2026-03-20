@@ -272,11 +272,11 @@ const T = {
     tts_api_key: "输入 TTS API Key",
     tts_output_format: "选择输出格式",
     tts_clone_target_model: "选择复刻目标模型",
-    tts_clone_target_model_hint: "常用可选 cosyvoice-v3.5-plus（推荐）或 cosyvoice-v2，也支持手动输入自定义模型名",
-    tts_clone_model_id: "输入已存在的复刻模型 ID（可留空，安装时后续创建）",
-    tts_clone_model_id_hint: "如果你已经在阿里云控制台创建过复刻音色，就把 modelId 填在这里；留空表示后续通过脚本或平台流程创建",
-    tts_clone_synthesis_model: "输入合成模型名称",
-    tts_clone_synthesis_model_hint: "这是之后发起语音合成时用的模型名，不是角色昵称；大多数场景保持默认 cosyvoice-clone-v1 即可",
+    tts_clone_target_model_hint: "这里选的是复刻所依赖的阿里云模型。常用可选 cosyvoice-v3.5-plus（推荐）或 cosyvoice-v2，也支持手动输入自定义模型名",
+    tts_clone_model_id: "输入已有复刻音色 ID（可留空，稍后自动创建）",
+    tts_clone_model_id_hint: "这是已经创建好的复刻音色 ID，不是上一步选择的模型名。若暂时没有，直接留空；后面提供示例音频 URL 后会自动创建",
+    tts_clone_synthesis_model: "输入合成模型名称（留空则跟随目标模型）",
+    tts_clone_synthesis_model_hint: "这是 TTS 合成阶段使用的模型名。大多数场景直接留空即可，程序会自动使用上一步选中的 targetModel",
     tts_clone_speaker: "输入说话人名称（可选）",
     tts_clone_speaker_hint: "说话人名称是你给这份复刻声音起的内部标识，便于区分多个复刻音色；可直接填角色名，例如 mghus",
     tts_clone_prompt_audio_url: "输入示例音频 URL",
@@ -453,11 +453,11 @@ const T = {
     tts_api_key: "Enter the TTS API key",
     tts_output_format: "Choose output format",
     tts_clone_target_model: "Choose clone target model",
-    tts_clone_target_model_hint: "Common options include cosyvoice-v3.5-plus (recommended) or cosyvoice-v2, and you can still enter a custom model name",
-    tts_clone_model_id: "Enter an existing clone model ID (optional)",
-    tts_clone_model_id_hint: "If you already created a cloned voice in Aliyun, paste its modelId here. Leave blank if you want to create it later",
-    tts_clone_synthesis_model: "Enter synthesis model name",
-    tts_clone_synthesis_model_hint: "This is the model name used later for TTS synthesis, not your character nickname. In most cases keep the default cosyvoice-clone-v1",
+    tts_clone_target_model_hint: "This is the Aliyun model used for voice cloning. Common options include cosyvoice-v3.5-plus (recommended) or cosyvoice-v2, and you can still enter a custom model name",
+    tts_clone_model_id: "Enter an existing cloned voice ID (optional)",
+    tts_clone_model_id_hint: "This is an already-created cloned voice ID, not the target model name above. Leave it blank if you want the setup flow to create it later from your prompt audio URL",
+    tts_clone_synthesis_model: "Enter synthesis model name (blank = follow target model)",
+    tts_clone_synthesis_model_hint: "This is the model name used later for TTS synthesis. In most cases just leave it blank and the setup will reuse the selected targetModel",
     tts_clone_speaker: "Enter speaker name (optional)",
     tts_clone_speaker_hint: "This is an internal label for the cloned voice, useful when you manage multiple cloned voices. A character name such as mghus is fine",
     tts_clone_prompt_audio_url: "Enter prompt audio URL",
@@ -1718,7 +1718,7 @@ async function configureTtsSelection(scope, settings) {
     log(`  ${c("dim", t("tts_clone_model_id_hint"))}`);
     let modelId = (await ask(`  ${t("tts_clone_model_id")}: `)) || current.clone.modelId || "";
     log(`  ${c("dim", t("tts_clone_synthesis_model_hint"))}`);
-    const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || current.clone.synthesisModel || targetModel;
+    const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || targetModel;
     log(`  ${c("dim", t("tts_clone_speaker_hint"))}`);
     const speaker = (await ask(`  ${t("tts_clone_speaker")}: `)) || current.clone.speaker || "";
     log(`  ${c("dim", t("tts_clone_prompt_audio_url_hint"))}`);
