@@ -58,11 +58,10 @@ clawmate_prepare_selfie({
     "requirements": ["phone not visible in frame", "..."]
   },
   "promptGuide": {
-    "style": "photorealistic | anime",
-    "requiredFields": ["scene", "action", "expression", "outfit", "lighting", "camera", "..."],
+    "requiredFields": ["scene", "action", "expression", "outfit", "lighting", "camera", "realism"],
     "rules": ["single scene only", "..."],
     "wordRange": "50-80 english words",
-    "example": "<style-specific example prompt>"
+    "example": "Photorealistic direct selfie, ..."
   }
 }
 ```
@@ -75,7 +74,6 @@ Your role switches to **image generation prompt engineer**. This prompt's consum
 - `clawmate_generate_selfie` automatically attaches character reference images to the generation API. Reference images already carry character identity, so **prohibit describing identity features** (age, race, beauty) in the prompt
 - Focus on dimensions sensitive to image generation models: **composition, lighting, materials, scene props, shooting angle**
 - Every `modeGuide.requirements` item must have corresponding description in prompt, cannot be omitted
-- **Follow the style indicated by `promptGuide.style`** — use style-appropriate vocabulary and visual descriptions (e.g., "natural skin texture" for photorealistic, "consistent 2D anime look" for anime)
 
 **Prompt generation requirements**:
 1. Cover all `promptGuide.requiredFields`
@@ -98,14 +96,8 @@ clawmate_generate_selfie({
 clawmate_prepare_selfie({ mode: "direct", emotion: "relaxed" })
 
 // Step 2 (call after generating prompt based on returned package)
-// Example for photorealistic style:
 clawmate_generate_selfie({
   prompt: "Photorealistic direct selfie, studying at a university library desk in the afternoon, open laptop and coffee cup in background, wearing comfortable hoodie, soft window light with warm ambient fill, focused but relaxed expression, medium close-up framing, natural skin texture, candid daily-life photo style",
-  mode: "direct"
-})
-// Example for anime style:
-clawmate_generate_selfie({
-  prompt: "Anime-style direct selfie, studying at a university library desk in the afternoon, open laptop and coffee cup in background, wearing comfortable hoodie, soft window light with warm ambient fill, focused but relaxed expression, medium close-up framing, consistent 2D anime look matching reference image style",
   mode: "direct"
 })
 ```
@@ -116,7 +108,6 @@ clawmate_generate_selfie({
 1. First give a natural text reply (e.g., `"Here you go~"`)
 2. The tool returns a local image path in `imagePath`
 3. Use the image referenced by that path and send it to the user
-4. Do not modify the path, and do not wrap it in `MEDIA:`, Markdown image syntax, or any channel-specific protocol
 
 **On failure** (`ok: false`):
 1. Use the `message` in the return to continue conversation
@@ -130,10 +121,3 @@ clawmate_generate_selfie({
 - **Prohibit using Chinese in prompt**
 - **Prohibit parallel multiple scenes**: Only write one main scene at a time
 - **Prohibit omitting mode**: Both tools must pass mode parameter
-
-## Important Notes
-
-1. The plugin only provides a local image path and does not prescribe the outbound media format
-2. Keep conversation natural, image is part of conversation, not mechanical "sending attachment"
-3. On failure, gracefully degrade to text, don't interrupt conversation
-4. Always maintain consistent style as specified by `promptGuide.style`, single scene, consistent lighting

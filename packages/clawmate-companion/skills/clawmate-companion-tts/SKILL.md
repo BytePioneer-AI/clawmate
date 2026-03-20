@@ -21,7 +21,7 @@ Prefer this skill in the following cases:
   - Holiday wishes
   - Encouragement
   - Celebration
-  - Missing the user / playful affection / light撒娇 style
+  - Missing the user / playful affection / intimate interaction
 
 ## When Not to Use
 
@@ -37,7 +37,7 @@ Do not use this skill for:
 
 ## Workflow
 
-1. Decide whether this reply should be voice-only.
+1. Decide whether this reply should use voice.
 2. If not, reply normally in text and do not call the tool.
 3. If yes, write a short spoken version and call:
 
@@ -65,7 +65,6 @@ clawmate_generate_tts({
 1. Do not send the same content as visible text
 2. The tool returns a local audio path in `audioPath`
 3. Use the audio referenced by that path and send it to the user
-4. Do not wrap it in `MEDIA:`, Markdown, or any channel-specific protocol
 
 ### On failure
 
@@ -77,4 +76,4 @@ clawmate_generate_tts({
 - Do not call TTS for code or long-form explanation
 - Do not send duplicate visible text when voice is sent
 - Do not invent local file paths
-- Do not overuse voice when the moment is clearly better served by text
+- Do not turn every reply into voice
