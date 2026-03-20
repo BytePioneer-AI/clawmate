@@ -122,6 +122,18 @@ type OpenClawPluginToolFactoryLike = (
   ctx: OpenClawToolContextLike,
 ) => OpenClawPluginToolLike | OpenClawPluginToolLike[] | null | undefined;
 
+interface DirectVoiceMessagePayload {
+  agentId?: string;
+  sessionId?: string;
+  channelId?: string;
+  agentAccountId?: string;
+  requesterSenderId?: string;
+  senderIsOwner?: boolean;
+  audioPath: string;
+  mimeType: string;
+  text?: string;
+}
+
 interface OpenClawPluginApiLike {
   resolvePath: (input: string) => string;
   pluginConfig?: Record<string, unknown>;
@@ -135,6 +147,8 @@ interface OpenClawPluginApiLike {
     handler: (event: unknown, ctx: OpenClawHookContextLike) => Promise<unknown> | unknown,
   ) => void;
   registerTool: (tool: OpenClawPluginToolLike | OpenClawPluginToolFactoryLike) => void;
+  sendVoiceMessage?: (payload: DirectVoiceMessagePayload) => Promise<unknown> | unknown;
+  sendAudioMessage?: (payload: DirectVoiceMessagePayload) => Promise<unknown> | unknown;
 }
 
 interface CharacterPrepareSessionState {
@@ -216,6 +230,26 @@ function detectAudioMimeFromBase64(base64: string): string {
   }
   if (base64.startsWith("T2dnUw")) {
     return "audio/ogg";
+  }
+  return "audio/wav";
+}
+
+function detectAudioMimeFromPath(audioPath: string): string {
+  const ext = path.extname(audioPath).toLowerCase();
+  if (ext === ".ogg" || ext === ".opus") {
+    return "audio/ogg";
+  }
+  if (ext === ".mp3") {
+    return "audio/mpeg";
+  }
+  if (ext === ".m4a") {
+    return "audio/mp4";
+  }
+  if (ext === ".aac") {
+    return "audio/aac";
+  }
+  if (ext === ".flac") {
+    return "audio/flac";
   }
   return "audio/wav";
 }
@@ -856,25 +890,106 @@ async function formatResult(result: GenerateSelfieResult, logger: ReturnType<typ
   });
 }
 
-async function formatTtsResult(result: GenerateTtsResult, outputFormat: "wav" | "ogg" | "opus" = "wav"): Promise<string> {
+type TtsDeliveryStatus = {
+  attempted: boolean;
+  delivered: boolean;
+  method: string | null;
+  reason?: string;
+};
+
+type TtsToolPayload =
+  | {
+      ok: true;
+      audioPath: string;
+      requestId: string | null;
+      model: string;
+      voice: string;
+      delivery?: TtsDeliveryStatus;
+      nextAction?: string;
+    }
+  | {
+      ok: false;
+      message: string;
+      error: string;
+      requestId: string | null;
+    };
+
+async function formatTtsResult(
+  result: GenerateTtsResult,
+  outputFormat: "wav" | "ogg" | "opus" = "wav",
+): Promise<TtsToolPayload> {
   if (result.ok) {
     const audioPath = await persistAudioToLocal(result.audioUrl, result.requestId, outputFormat);
-    return JSON.stringify({
+    return {
       ok: true,
       audioPath,
       requestId: result.requestId,
       model: result.model,
       voice: result.voice,
-    });
+    };
   }
 
   const failure = result as GenerateTtsFailure;
-  return JSON.stringify({
+  return {
     ok: false,
     message: failure.message,
     error: failure.error,
     requestId: failure.requestId ?? null,
-  });
+  };
+}
+
+async function tryAutoSendVoiceMessage(
+  api: OpenClawPluginApiLike,
+  scope: OpenClawToolContextLike,
+  audioPath: string,
+  text: string,
+): Promise<TtsDeliveryStatus> {
+  const payload: DirectVoiceMessagePayload = {
+    agentId: scope.agentId,
+    sessionId: scope.sessionId,
+    channelId: scope.messageChannel,
+    agentAccountId: scope.agentAccountId,
+    requesterSenderId: scope.requesterSenderId,
+    senderIsOwner: scope.senderIsOwner,
+    audioPath,
+    mimeType: detectAudioMimeFromPath(audioPath),
+    text,
+  };
+
+  if (typeof api.sendVoiceMessage === "function") {
+    try {
+      await api.sendVoiceMessage(payload);
+      return { attempted: true, delivered: true, method: "sendVoiceMessage" };
+    } catch (error) {
+      return {
+        attempted: true,
+        delivered: false,
+        method: "sendVoiceMessage",
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  if (typeof api.sendAudioMessage === "function") {
+    try {
+      await api.sendAudioMessage(payload);
+      return { attempted: true, delivered: true, method: "sendAudioMessage" };
+    } catch (error) {
+      return {
+        attempted: true,
+        delivered: false,
+        method: "sendAudioMessage",
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  return {
+    attempted: false,
+    delivered: false,
+    method: null,
+    reason: "RUNTIME_CAPABILITY_MISSING",
+  };
 }
 
 export default function registerClawMateCompanion(api: OpenClawPluginApiLike): void {
@@ -1117,9 +1232,15 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
           };
         }
 
-        let text: string;
+        let payload: TtsToolPayload;
         try {
-          text = await formatTtsResult(result, config.tts.outputFormat);
+          payload = await formatTtsResult(result, config.tts.outputFormat);
+          if (payload.ok) {
+            payload.delivery = await tryAutoSendVoiceMessage(api, toolScope, payload.audioPath, params.text ?? "");
+            if (!payload.delivery.delivered) {
+              payload.nextAction = "use_audio_path_to_send_voice";
+            }
+          }
         } catch (error) {
           const remoteAudioUrl =
             result.ok && HTTP_URL_PATTERN.test(result.audioUrl.trim()) ? result.audioUrl.trim() : null;
@@ -1130,19 +1251,19 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
             agentId: toolScope.agentId,
             sessionId: toolScope.sessionId,
           });
-          text = JSON.stringify({
+          payload = {
             ok: false,
             message: config.tts.degradeMessage,
             error: error instanceof Error ? error.message : String(error),
             requestId: result.ok ? result.requestId ?? null : null,
-          });
+          };
         }
 
         return {
           content: [
             {
               type: "text",
-              text,
+              text: JSON.stringify(payload),
             },
           ],
         };

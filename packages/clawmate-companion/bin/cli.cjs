@@ -11,6 +11,10 @@ const path = require("path");
 const readline = require("readline");
 const { execSync } = require("child_process");
 const os = require("os");
+const {
+  createAliyunCloneVoiceModel,
+  pollAliyunCloneVoiceModel,
+} = require("./aliyun-clone.cjs");
 
 function resolveOpenClawHome() {
   const envHome = process.env.OPENCLAW_HOME?.trim();
@@ -267,12 +271,12 @@ const T = {
     tts_select_language: "选择默认语种",
     tts_api_key: "输入 TTS API Key",
     tts_output_format: "选择输出格式",
-    tts_clone_target_model: "输入复刻目标模型",
-    tts_clone_target_model_hint: "常用可填 cosyvoice-v3.5-plus（推荐）或 cosyvoice-v2，直接回车使用推荐值；如官方后续新增型号也可自定义输入",
-    tts_clone_model_id: "输入已存在的复刻模型 ID（可留空，安装时后续创建）",
-    tts_clone_model_id_hint: "如果你已经在阿里云控制台创建过复刻音色，就把 modelId 填在这里；留空表示后续通过脚本或平台流程创建",
-    tts_clone_synthesis_model: "输入合成模型名称",
-    tts_clone_synthesis_model_hint: "这是之后发起语音合成时用的模型名，不是角色昵称；大多数场景保持默认 cosyvoice-clone-v1 即可",
+    tts_clone_target_model: "选择复刻目标模型",
+    tts_clone_target_model_hint: "这里选的是复刻所依赖的阿里云模型。常用可选 cosyvoice-v3.5-plus（推荐）或 cosyvoice-v2，也支持手动输入自定义模型名",
+    tts_clone_model_id: "输入已有复刻音色 ID（可留空，稍后自动创建）",
+    tts_clone_model_id_hint: "这是已经创建好的复刻音色 ID，不是上一步选择的模型名。若暂时没有，直接留空；后面提供示例音频 URL 后会自动创建",
+    tts_clone_synthesis_model: "输入合成模型名称（留空则跟随目标模型）",
+    tts_clone_synthesis_model_hint: "这是 TTS 合成阶段使用的模型名。大多数场景直接留空即可，程序会自动使用上一步选中的 targetModel",
     tts_clone_speaker: "输入说话人名称（可选）",
     tts_clone_speaker_hint: "说话人名称是你给这份复刻声音起的内部标识，便于区分多个复刻音色；可直接填角色名，例如 mghus",
     tts_clone_prompt_audio_url: "输入示例音频 URL",
@@ -448,12 +452,12 @@ const T = {
     tts_select_language: "Choose the default language",
     tts_api_key: "Enter the TTS API key",
     tts_output_format: "Choose output format",
-    tts_clone_target_model: "Enter clone target model",
-    tts_clone_target_model_hint: "Common values include cosyvoice-v3.5-plus (recommended) or cosyvoice-v2. Press Enter to use the recommended default, or type a custom model if Aliyun adds a newer one",
-    tts_clone_model_id: "Enter an existing clone model ID (optional)",
-    tts_clone_model_id_hint: "If you already created a cloned voice in Aliyun, paste its modelId here. Leave blank if you want to create it later",
-    tts_clone_synthesis_model: "Enter synthesis model name",
-    tts_clone_synthesis_model_hint: "This is the model name used later for TTS synthesis, not your character nickname. In most cases keep the default cosyvoice-clone-v1",
+    tts_clone_target_model: "Choose clone target model",
+    tts_clone_target_model_hint: "This is the Aliyun model used for voice cloning. Common options include cosyvoice-v3.5-plus (recommended) or cosyvoice-v2, and you can still enter a custom model name",
+    tts_clone_model_id: "Enter an existing cloned voice ID (optional)",
+    tts_clone_model_id_hint: "This is an already-created cloned voice ID, not the target model name above. Leave it blank if you want the setup flow to create it later from your prompt audio URL",
+    tts_clone_synthesis_model: "Enter synthesis model name (blank = follow target model)",
+    tts_clone_synthesis_model_hint: "This is the model name used later for TTS synthesis. In most cases just leave it blank and the setup will reuse the selected targetModel",
     tts_clone_speaker: "Enter speaker name (optional)",
     tts_clone_speaker_hint: "This is an internal label for the cloned voice, useful when you manage multiple cloned voices. A character name such as mghus is fine",
     tts_clone_prompt_audio_url: "Enter prompt audio URL",
@@ -990,7 +994,12 @@ function normalizeTtsConfig(value) {
       baseUrl: typeof clone.baseUrl === "string" && clone.baseUrl.trim() ? clone.baseUrl.trim() : (typeof value?.baseUrl === "string" && value.baseUrl.trim() ? value.baseUrl.trim() : TTS_DEFAULT_BASE_URL),
       targetModel: typeof clone.targetModel === "string" && clone.targetModel.trim() ? clone.targetModel.trim() : "cosyvoice-v1",
       modelId: typeof clone.modelId === "string" ? clone.modelId.trim() : "",
-      synthesisModel: typeof clone.synthesisModel === "string" && clone.synthesisModel.trim() ? clone.synthesisModel.trim() : "cosyvoice-clone-v1",
+      synthesisModel:
+        typeof clone.synthesisModel === "string" && clone.synthesisModel.trim()
+          ? clone.synthesisModel.trim()
+          : typeof clone.targetModel === "string" && clone.targetModel.trim()
+            ? clone.targetModel.trim()
+            : "cosyvoice-v1",
       speaker: typeof clone.speaker === "string" ? clone.speaker.trim() : "",
       promptAudioUrl: typeof clone.promptAudioUrl === "string" ? clone.promptAudioUrl.trim() : "",
       promptText: typeof clone.promptText === "string" ? clone.promptText.trim() : "",
@@ -1677,13 +1686,75 @@ async function configureTtsSelection(scope, settings) {
 
   if (provider === "aliyun-clone") {
     logInfo(`${t("tts_clone_doc_hint")} ${TTS_CLONE_DOC_URL}`);
-    const targetModel = (await ask(`  ${t("tts_clone_target_model")}: `)) || current.clone.targetModel || "cosyvoice-v1";
-    const modelId = (await ask(`  ${t("tts_clone_model_id")}: `)) || current.clone.modelId || "";
-    const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || current.clone.synthesisModel || "cosyvoice-clone-v1";
+    logInfo(`${t("tts_clone_experience_hint")} ${TTS_CLONE_EXPERIENCE_URL}`);
+    logInfo(`${t("tts_clone_oss_hint")} ${OSS_CONSOLE_URL}`);
+    log(`  ${c("dim", t("tts_clone_target_model_hint"))}`);
+
+    const cloneTargetModelOptions = ["cosyvoice-v3.5-plus", "cosyvoice-v2"];
+    const cloneTargetModelItems = cloneTargetModelOptions.map((item) => {
+      const recommendedTag = item === "cosyvoice-v3.5-plus" ? ` ${c("yellow", `(${t("tts_recommended")})`)}` : "";
+      return `${item}${recommendedTag}${item === current.clone.targetModel ? currentTag() : ""}`;
+    });
+    cloneTargetModelItems.push(t("custom_input"));
+
+    const cloneTargetModelIndex = await arrowSelect(cloneTargetModelItems, {
+      title: `  ${t("tts_clone_target_model")}\n  ${c("dim", t("arrow_hint"))}`,
+      initialIndex: Math.max(0, cloneTargetModelOptions.indexOf(current.clone.targetModel || "cosyvoice-v3.5-plus")),
+    });
+
+    let targetModel = "cosyvoice-v3.5-plus";
+    if (cloneTargetModelIndex === cloneTargetModelOptions.length) {
+      const customTargetModel = await ask(`  ${t("f_custom_model")}`);
+      if (!customTargetModel) {
+        logError(`${t("tts_clone_target_model")} ${t("field_required")}`);
+        return null;
+      }
+      targetModel = customTargetModel;
+    } else {
+      targetModel = cloneTargetModelOptions[cloneTargetModelIndex];
+    }
+    logSuccess(`${t("selected")} ${targetModel}`);
+
+    log(`  ${c("dim", t("tts_clone_model_id_hint"))}`);
+    let modelId = (await ask(`  ${t("tts_clone_model_id")}: `)) || current.clone.modelId || "";
+    log(`  ${c("dim", t("tts_clone_synthesis_model_hint"))}`);
+    const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || targetModel;
+    log(`  ${c("dim", t("tts_clone_speaker_hint"))}`);
     const speaker = (await ask(`  ${t("tts_clone_speaker")}: `)) || current.clone.speaker || "";
+    log(`  ${c("dim", t("tts_clone_prompt_audio_url_hint"))}`);
     const promptAudioUrl = (await ask(`  ${t("tts_clone_prompt_audio_url")}: `)) || current.clone.promptAudioUrl || "";
+    log(`  ${c("dim", t("tts_clone_prompt_text_hint"))}`);
     const promptText = (await ask(`  ${t("tts_clone_prompt_text")}: `)) || current.clone.promptText || "";
+    log(`  ${c("dim", t("tts_clone_status_url_hint"))}`);
     const statusUrl = (await ask(`  ${t("tts_clone_status_url")}: `)) || current.clone.statusUrl || TTS_DEFAULT_BASE_URL;
+
+    if (!modelId && promptAudioUrl) {
+      logInfo(lang === "en" ? "Creating cloned voice model..." : "正在自动创建复刻音色模型...");
+      const created = await createAliyunCloneVoiceModel({
+        apiKey,
+        baseUrl: current.clone.baseUrl || TTS_DEFAULT_BASE_URL,
+        targetModel,
+        speaker,
+        promptAudioUrl,
+      });
+
+      modelId = created.modelId || "";
+      if (!modelId && created.taskId) {
+        logInfo(lang === "en" ? "Waiting for cloned voice model to finish..." : "正在等待复刻音色模型创建完成...");
+        const polled = await pollAliyunCloneVoiceModel({
+          apiKey,
+          statusUrl,
+          taskId: created.taskId,
+        });
+        modelId = polled.modelId || "";
+      }
+
+      if (!modelId) {
+        logError(lang === "en" ? "Unable to resolve clone modelId automatically" : "未能自动获取复刻模型 modelId");
+        return null;
+      }
+      logSuccess(`${t("selected")} modelId=${modelId}`);
+    }
 
     const result = {
       mode: "set",
@@ -2253,6 +2324,8 @@ module.exports = {
     normalizeTtsConfig,
     normalizeAgents,
     resolveScopeSettings,
+    createAliyunCloneVoiceModel,
+    pollAliyunCloneVoiceModel,
     setLang(nextLang) {
       lang = nextLang;
     },

@@ -12,7 +12,6 @@ async function main(): Promise<void> {
   const targetModel = process.env.CLAWMATE_TTS_CLONE_TARGET_MODEL?.trim() || "cosyvoice-v1";
   const synthesisModel = process.env.CLAWMATE_TTS_CLONE_SYNTHESIS_MODEL?.trim() || "cosyvoice-clone-v1";
   const promptAudioUrl = process.env.CLAWMATE_TTS_CLONE_PROMPT_AUDIO_URL?.trim() || "";
-  const promptText = process.env.CLAWMATE_TTS_CLONE_PROMPT_TEXT?.trim() || "";
   const speaker = process.env.CLAWMATE_TTS_CLONE_SPEAKER?.trim() || "";
   const statusUrl = (process.env.CLAWMATE_TTS_CLONE_STATUS_URL?.trim() || baseUrl).replace(/\/+$/, "");
   let modelId = process.env.CLAWMATE_TTS_CLONE_MODEL_ID?.trim() || "";
@@ -24,8 +23,8 @@ async function main(): Promise<void> {
   }
 
   if (!modelId) {
-    if (!promptAudioUrl || !promptText) {
-      console.error("Missing CLAWMATE_TTS_CLONE_PROMPT_AUDIO_URL or CLAWMATE_TTS_CLONE_PROMPT_TEXT");
+    if (!promptAudioUrl) {
+      console.error("Missing CLAWMATE_TTS_CLONE_PROMPT_AUDIO_URL");
       process.exitCode = 1;
       return;
     }
@@ -36,7 +35,6 @@ async function main(): Promise<void> {
       targetModel,
       speaker,
       promptAudioUrl,
-      promptText,
     });
 
     console.log(JSON.stringify({ stage: "create", ...created }, null, 2));

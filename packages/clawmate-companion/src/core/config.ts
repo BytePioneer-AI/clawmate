@@ -151,7 +151,9 @@ function normalizeTts(value: unknown): TtsConfig {
       synthesisModel:
         typeof clone.synthesisModel === "string" && clone.synthesisModel.trim()
           ? clone.synthesisModel.trim()
-          : "cosyvoice-clone-v1",
+          : typeof clone.targetModel === "string" && clone.targetModel.trim()
+            ? clone.targetModel.trim()
+            : "cosyvoice-v1",
       speaker: normalizeText(clone.speaker),
       promptAudioUrl: normalizeText(clone.promptAudioUrl),
       promptText: normalizeText(clone.promptText),
