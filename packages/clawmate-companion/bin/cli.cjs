@@ -994,7 +994,12 @@ function normalizeTtsConfig(value) {
       baseUrl: typeof clone.baseUrl === "string" && clone.baseUrl.trim() ? clone.baseUrl.trim() : (typeof value?.baseUrl === "string" && value.baseUrl.trim() ? value.baseUrl.trim() : TTS_DEFAULT_BASE_URL),
       targetModel: typeof clone.targetModel === "string" && clone.targetModel.trim() ? clone.targetModel.trim() : "cosyvoice-v1",
       modelId: typeof clone.modelId === "string" ? clone.modelId.trim() : "",
-      synthesisModel: typeof clone.synthesisModel === "string" && clone.synthesisModel.trim() ? clone.synthesisModel.trim() : "cosyvoice-clone-v1",
+      synthesisModel:
+        typeof clone.synthesisModel === "string" && clone.synthesisModel.trim()
+          ? clone.synthesisModel.trim()
+          : typeof clone.targetModel === "string" && clone.targetModel.trim()
+            ? clone.targetModel.trim()
+            : "cosyvoice-v1",
       speaker: typeof clone.speaker === "string" ? clone.speaker.trim() : "",
       promptAudioUrl: typeof clone.promptAudioUrl === "string" ? clone.promptAudioUrl.trim() : "",
       promptText: typeof clone.promptText === "string" ? clone.promptText.trim() : "",
@@ -1713,7 +1718,7 @@ async function configureTtsSelection(scope, settings) {
     log(`  ${c("dim", t("tts_clone_model_id_hint"))}`);
     let modelId = (await ask(`  ${t("tts_clone_model_id")}: `)) || current.clone.modelId || "";
     log(`  ${c("dim", t("tts_clone_synthesis_model_hint"))}`);
-    const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || current.clone.synthesisModel || "cosyvoice-clone-v1";
+    const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || current.clone.synthesisModel || targetModel;
     log(`  ${c("dim", t("tts_clone_speaker_hint"))}`);
     const speaker = (await ask(`  ${t("tts_clone_speaker")}: `)) || current.clone.speaker || "";
     log(`  ${c("dim", t("tts_clone_prompt_audio_url_hint"))}`);

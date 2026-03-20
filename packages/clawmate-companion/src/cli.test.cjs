@@ -210,7 +210,7 @@ test("resolveScopeSettings marks shared fields as unconfigured on fresh install"
       baseUrl: "https://dashscope.aliyuncs.com/api/v1",
       targetModel: "cosyvoice-v1",
       modelId: "",
-      synthesisModel: "cosyvoice-clone-v1",
+      synthesisModel: "cosyvoice-v1",
       speaker: "",
       promptAudioUrl: "",
       promptText: "",
