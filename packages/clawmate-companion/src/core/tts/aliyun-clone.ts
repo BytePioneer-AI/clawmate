@@ -242,18 +242,23 @@ export async function pollAliyunCloneVoiceModel(
 }
 
 async function resolveWebSocketConstructor(): Promise<typeof WebSocket> {
+  try {
+    const wsModule = await import("ws");
+    const ctor = wsModule.WebSocket ?? wsModule.default;
+    if (ctor) {
+      return ctor as typeof WebSocket;
+    }
+  } catch {
+    // fall through to global WebSocket check
+  }
+
   if (typeof WebSocket !== "undefined") {
     return WebSocket;
   }
 
-  const wsModule = await import("ws");
-  const ctor = wsModule.WebSocket ?? wsModule.default;
-  if (!ctor) {
-    throw new ClawMateError("当前环境缺少 WebSocket 支持", {
-      code: "TTS_WEBSOCKET_UNAVAILABLE",
-    });
-  }
-  return ctor as typeof WebSocket;
+  throw new ClawMateError("当前环境缺少 WebSocket 支持，请安装 ws 依赖", {
+    code: "TTS_WEBSOCKET_UNAVAILABLE",
+  });
 }
 
 function encodeAudioAsDataUrl(chunks: Uint8Array[]): string {
