@@ -267,8 +267,8 @@ const T = {
     tts_select_language: "选择默认语种",
     tts_api_key: "输入 TTS API Key",
     tts_output_format: "选择输出格式",
-    tts_clone_target_model: "输入复刻目标模型",
-    tts_clone_target_model_hint: "常用可填 cosyvoice-v3.5-plus（推荐）或 cosyvoice-v2，直接回车使用推荐值；如官方后续新增型号也可自定义输入",
+    tts_clone_target_model: "选择复刻目标模型",
+    tts_clone_target_model_hint: "常用可选 cosyvoice-v3.5-plus（推荐）或 cosyvoice-v2，也支持手动输入自定义模型名",
     tts_clone_model_id: "输入已存在的复刻模型 ID（可留空，安装时后续创建）",
     tts_clone_model_id_hint: "如果你已经在阿里云控制台创建过复刻音色，就把 modelId 填在这里；留空表示后续通过脚本或平台流程创建",
     tts_clone_synthesis_model: "输入合成模型名称",
@@ -448,8 +448,8 @@ const T = {
     tts_select_language: "Choose the default language",
     tts_api_key: "Enter the TTS API key",
     tts_output_format: "Choose output format",
-    tts_clone_target_model: "Enter clone target model",
-    tts_clone_target_model_hint: "Common values include cosyvoice-v3.5-plus (recommended) or cosyvoice-v2. Press Enter to use the recommended default, or type a custom model if Aliyun adds a newer one",
+    tts_clone_target_model: "Choose clone target model",
+    tts_clone_target_model_hint: "Common options include cosyvoice-v3.5-plus (recommended) or cosyvoice-v2, and you can still enter a custom model name",
     tts_clone_model_id: "Enter an existing clone model ID (optional)",
     tts_clone_model_id_hint: "If you already created a cloned voice in Aliyun, paste its modelId here. Leave blank if you want to create it later",
     tts_clone_synthesis_model: "Enter synthesis model name",
@@ -1677,12 +1677,46 @@ async function configureTtsSelection(scope, settings) {
 
   if (provider === "aliyun-clone") {
     logInfo(`${t("tts_clone_doc_hint")} ${TTS_CLONE_DOC_URL}`);
-    const targetModel = (await ask(`  ${t("tts_clone_target_model")}: `)) || current.clone.targetModel || "cosyvoice-v1";
+    logInfo(`${t("tts_clone_experience_hint")} ${TTS_CLONE_EXPERIENCE_URL}`);
+    logInfo(`${t("tts_clone_oss_hint")} ${OSS_CONSOLE_URL}`);
+    log(`  ${c("dim", t("tts_clone_target_model_hint"))}`);
+
+    const cloneTargetModelOptions = ["cosyvoice-v3.5-plus", "cosyvoice-v2"];
+    const cloneTargetModelItems = cloneTargetModelOptions.map((item) => {
+      const recommendedTag = item === "cosyvoice-v3.5-plus" ? ` ${c("yellow", `(${t("tts_recommended")})`)}` : "";
+      return `${item}${recommendedTag}${item === current.clone.targetModel ? currentTag() : ""}`;
+    });
+    cloneTargetModelItems.push(t("custom_input"));
+
+    const cloneTargetModelIndex = await arrowSelect(cloneTargetModelItems, {
+      title: `  ${t("tts_clone_target_model")}\n  ${c("dim", t("arrow_hint"))}`,
+      initialIndex: Math.max(0, cloneTargetModelOptions.indexOf(current.clone.targetModel || "cosyvoice-v3.5-plus")),
+    });
+
+    let targetModel = "cosyvoice-v3.5-plus";
+    if (cloneTargetModelIndex === cloneTargetModelOptions.length) {
+      const customTargetModel = await ask(`  ${t("f_custom_model")}`);
+      if (!customTargetModel) {
+        logError(`${t("tts_clone_target_model")} ${t("field_required")}`);
+        return null;
+      }
+      targetModel = customTargetModel;
+    } else {
+      targetModel = cloneTargetModelOptions[cloneTargetModelIndex];
+    }
+    logSuccess(`${t("selected")} ${targetModel}`);
+
+    log(`  ${c("dim", t("tts_clone_model_id_hint"))}`);
     const modelId = (await ask(`  ${t("tts_clone_model_id")}: `)) || current.clone.modelId || "";
+    log(`  ${c("dim", t("tts_clone_synthesis_model_hint"))}`);
     const synthesisModel = (await ask(`  ${t("tts_clone_synthesis_model")}: `)) || current.clone.synthesisModel || "cosyvoice-clone-v1";
+    log(`  ${c("dim", t("tts_clone_speaker_hint"))}`);
     const speaker = (await ask(`  ${t("tts_clone_speaker")}: `)) || current.clone.speaker || "";
+    log(`  ${c("dim", t("tts_clone_prompt_audio_url_hint"))}`);
     const promptAudioUrl = (await ask(`  ${t("tts_clone_prompt_audio_url")}: `)) || current.clone.promptAudioUrl || "";
+    log(`  ${c("dim", t("tts_clone_prompt_text_hint"))}`);
     const promptText = (await ask(`  ${t("tts_clone_prompt_text")}: `)) || current.clone.promptText || "";
+    log(`  ${c("dim", t("tts_clone_status_url_hint"))}`);
     const statusUrl = (await ask(`  ${t("tts_clone_status_url")}: `)) || current.clone.statusUrl || TTS_DEFAULT_BASE_URL;
 
     const result = {
