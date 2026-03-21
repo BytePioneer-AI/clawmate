@@ -91,33 +91,74 @@ function normalizeProactiveSelfie(value: unknown): ProactiveSelfieConfig {
   };
 }
 
+function normalizeBaseUrl(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value.trim().replace(/\/+$/, "") : fallback;
+}
+
 function normalizeTts(value: unknown): TtsConfig {
   const source = asObject(value);
-  const normalizedBaseUrl =
-    typeof source.baseUrl === "string" && source.baseUrl.trim()
-      ? source.baseUrl.trim().replace(/\/+$/, "")
-      : "https://dashscope.aliyuncs.com/api/v1";
+  const official = asObject(source.official);
+  const clone = asObject(source.clone);
+  const legacyBaseUrl = normalizeBaseUrl(source.baseUrl, "https://dashscope.aliyuncs.com/api/v1");
+  const provider =
+    source.provider === "aliyun-clone" || source.provider === "aliyun-official"
+      ? source.provider
+      : "aliyun-official";
+  const outputFormat = source.outputFormat === "ogg" || source.outputFormat === "opus" ? source.outputFormat : "wav";
 
   return {
     enabled: Boolean(source.enabled),
-    model:
-      typeof source.model === "string" && source.model.trim()
-        ? source.model.trim()
-        : "qwen3-tts-flash",
-    voice:
-      typeof source.voice === "string" && source.voice.trim()
-        ? source.voice.trim()
-        : "Chelsie",
-    languageType:
-      typeof source.languageType === "string" && source.languageType.trim()
-        ? source.languageType.trim()
-        : "Chinese",
-    apiKey: normalizeText(source.apiKey),
-    baseUrl: normalizedBaseUrl,
+    provider,
+    outputFormat,
     degradeMessage:
       typeof source.degradeMessage === "string" && source.degradeMessage.trim()
         ? source.degradeMessage.trim()
         : "语音暂时发送失败，我先打字陪你。",
+    official: {
+      model:
+        typeof official.model === "string" && official.model.trim()
+          ? official.model.trim()
+          : typeof source.model === "string" && source.model.trim()
+            ? source.model.trim()
+            : "qwen3-tts-flash",
+      voice:
+        typeof official.voice === "string" && official.voice.trim()
+          ? official.voice.trim()
+          : typeof source.voice === "string" && source.voice.trim()
+            ? source.voice.trim()
+            : "Chelsie",
+      languageType:
+        typeof official.languageType === "string" && official.languageType.trim()
+          ? official.languageType.trim()
+          : typeof source.languageType === "string" && source.languageType.trim()
+            ? source.languageType.trim()
+            : "Chinese",
+      apiKey:
+        typeof official.apiKey === "string" && official.apiKey.trim()
+          ? official.apiKey.trim()
+          : normalizeText(source.apiKey),
+      baseUrl: normalizeBaseUrl(official.baseUrl, legacyBaseUrl),
+    },
+    clone: {
+      apiKey:
+        typeof clone.apiKey === "string" && clone.apiKey.trim()
+          ? clone.apiKey.trim()
+          : normalizeText(source.apiKey),
+      baseUrl: normalizeBaseUrl(clone.baseUrl, legacyBaseUrl),
+      targetModel:
+        typeof clone.targetModel === "string" && clone.targetModel.trim() ? clone.targetModel.trim() : "cosyvoice-v1",
+      modelId: normalizeText(clone.modelId),
+      synthesisModel:
+        typeof clone.synthesisModel === "string" && clone.synthesisModel.trim()
+          ? clone.synthesisModel.trim()
+          : typeof clone.targetModel === "string" && clone.targetModel.trim()
+            ? clone.targetModel.trim()
+            : "cosyvoice-v1",
+      speaker: normalizeText(clone.speaker),
+      promptAudioUrl: normalizeText(clone.promptAudioUrl),
+      promptText: normalizeText(clone.promptText),
+      statusUrl: normalizeBaseUrl(clone.statusUrl, legacyBaseUrl),
+    },
   };
 }
 

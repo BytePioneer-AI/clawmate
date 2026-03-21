@@ -90,6 +90,43 @@
           "enabled": {
             "type": "boolean"
           },
+          "provider": {
+            "type": "string",
+            "enum": ["aliyun-official", "aliyun-clone"]
+          },
+          "outputFormat": {
+            "type": "string",
+            "enum": ["wav", "ogg", "opus"]
+          },
+          "degradeMessage": {
+            "type": "string"
+          },
+          "official": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "model": { "type": "string" },
+              "voice": { "type": "string" },
+              "languageType": { "type": "string" },
+              "apiKey": { "type": "string" },
+              "baseUrl": { "type": "string" }
+            }
+          },
+          "clone": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "apiKey": { "type": "string" },
+              "baseUrl": { "type": "string" },
+              "targetModel": { "type": "string" },
+              "modelId": { "type": "string" },
+              "synthesisModel": { "type": "string" },
+              "speaker": { "type": "string" },
+              "promptAudioUrl": { "type": "string" },
+              "promptText": { "type": "string" },
+              "statusUrl": { "type": "string" }
+            }
+          },
           "model": {
             "type": "string"
           },
@@ -103,9 +140,6 @@
             "type": "string"
           },
           "baseUrl": {
-            "type": "string"
-          },
-          "degradeMessage": {
             "type": "string"
           }
         }
@@ -199,6 +233,43 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "provider": {
+                  "type": "string",
+                  "enum": ["aliyun-official", "aliyun-clone"]
+                },
+                "outputFormat": {
+                  "type": "string",
+                  "enum": ["wav", "ogg", "opus"]
+                },
+                "degradeMessage": {
+                  "type": "string"
+                },
+                "official": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "model": { "type": "string" },
+                    "voice": { "type": "string" },
+                    "languageType": { "type": "string" },
+                    "apiKey": { "type": "string" },
+                    "baseUrl": { "type": "string" }
+                  }
+                },
+                "clone": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "apiKey": { "type": "string" },
+                    "baseUrl": { "type": "string" },
+                    "targetModel": { "type": "string" },
+                    "modelId": { "type": "string" },
+                    "synthesisModel": { "type": "string" },
+                    "speaker": { "type": "string" },
+                    "promptAudioUrl": { "type": "string" },
+                    "promptText": { "type": "string" },
+                    "statusUrl": { "type": "string" }
+                  }
+                },
                 "model": {
                   "type": "string"
                 },
@@ -212,9 +283,6 @@
                   "type": "string"
                 },
                 "baseUrl": {
-                  "type": "string"
-                },
-                "degradeMessage": {
                   "type": "string"
                 }
               }

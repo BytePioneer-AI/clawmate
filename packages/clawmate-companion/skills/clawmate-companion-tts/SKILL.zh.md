@@ -63,8 +63,10 @@ clawmate_generate_tts({
 ### 成功时
 
 1. 不要再发送同内容可见文字
-2. 工具结果会返回本地音频路径 `audioPath`
-3. 使用这个路径对应的音频，把语音发给用户
+2. 如果工具结果里的 `delivery.delivered` 为 `true`，表示插件已直接把语音发出，此时不要再补发一次
+3. 如果工具结果里的 `delivery.delivered` 不为 `true`，工具结果会返回本地音频路径 `audioPath`
+4. 此时必须立刻使用这个路径对应的音频，把语音发给用户
+5. 若结果里出现 `nextAction = use_audio_path_to_send_voice`，按该指令执行，不要只复述路径
 
 ### 失败时
 

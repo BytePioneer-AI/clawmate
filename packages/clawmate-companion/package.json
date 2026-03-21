@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.44.0",
-    "openai": "^6.22.0"
+    "openai": "^6.22.0",
+    "ws": "^8.18.0"
   }
 }

@@ -1,4 +1,5 @@
 import { ClawMateError } from "./errors";
+import { generateAliyunCloneTts } from "./tts/aliyun-clone";
 import { generateAliyunTts } from "./tts/aliyun";
 import type { ClawMateConfig, GenerateTtsResult } from "./types";
 
@@ -28,7 +29,8 @@ export async function generateTts(options: GenerateTtsOptions): Promise<Generate
     };
   }
 
-  const apiKey = config.tts.apiKey.trim();
+  const apiKey =
+    config.tts.provider === "aliyun-clone" ? config.tts.clone.apiKey.trim() : config.tts.official.apiKey.trim();
   if (!apiKey) {
     return {
       ok: false,
@@ -38,15 +40,10 @@ export async function generateTts(options: GenerateTtsOptions): Promise<Generate
   }
 
   try {
-    const result = await generateAliyunTts({
-      text: trimmedText,
-      model: config.tts.model,
-      voice: config.tts.voice,
-      languageType: config.tts.languageType,
-      apiKey,
-      baseUrl: config.tts.baseUrl,
-      fetchImpl,
-    });
+    const result =
+      config.tts.provider === "aliyun-clone"
+        ? await generateCloneTts(trimmedText, config, fetchImpl)
+        : await generateOfficialTts(trimmedText, config, fetchImpl);
 
     return {
       ok: true,
@@ -69,5 +66,35 @@ export async function generateTts(options: GenerateTtsOptions): Promise<Generate
       error: typedError.message,
       requestId: typedError.requestId,
     };
+  }
+  
+  async function generateOfficialTts(text: string, config: ClawMateConfig, fetchImpl?: typeof fetch) {
+    return generateAliyunTts({
+      text,
+      model: config.tts.official.model,
+      voice: config.tts.official.voice,
+      languageType: config.tts.official.languageType,
+      apiKey: config.tts.official.apiKey,
+      baseUrl: config.tts.official.baseUrl,
+      fetchImpl,
+    });
+  }
+  
+  async function generateCloneTts(text: string, config: ClawMateConfig, fetchImpl?: typeof fetch) {
+    if (!config.tts.clone.modelId.trim()) {
+      throw new ClawMateError("请先完成复刻音色模型创建并配置 modelId", {
+        code: "TTS_CLONE_MODEL_ID_MISSING",
+      });
+    }
+  
+    return generateAliyunCloneTts({
+      text,
+      apiKey: config.tts.clone.apiKey,
+      baseUrl: config.tts.clone.baseUrl,
+      model: config.tts.clone.synthesisModel,
+      modelId: config.tts.clone.modelId,
+      speaker: config.tts.clone.speaker,
+      fetchImpl,
+    });
   }
 }

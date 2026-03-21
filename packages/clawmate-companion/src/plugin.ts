@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { generateSelfie } from "./core/pipeline";
 import { prepareSelfie } from "./core/prepare";
 import { generateTts } from "./core/tts";
+import { transcodeAudioWithFfmpeg } from "./core/tts/ffmpeg";
 import { loadCharacterAssets, listCharacters } from "./core/characters";
 import { createCharacter } from "./core/character-creator";
 import { createLogger } from "./core/logger";
@@ -35,12 +36,32 @@ interface PluginConfigOverrideInput {
   proactiveSelfie?: { enabled?: boolean; probability?: number };
   tts?: {
     enabled?: boolean;
+    provider?: string;
+    outputFormat?: string;
     model?: string;
     voice?: string;
     languageType?: string;
     apiKey?: string;
     baseUrl?: string;
     degradeMessage?: string;
+    official?: {
+      model?: string;
+      voice?: string;
+      languageType?: string;
+      apiKey?: string;
+      baseUrl?: string;
+    };
+    clone?: {
+      apiKey?: string;
+      baseUrl?: string;
+      targetModel?: string;
+      modelId?: string;
+      synthesisModel?: string;
+      speaker?: string;
+      promptAudioUrl?: string;
+      promptText?: string;
+      statusUrl?: string;
+    };
   };
 }
 
@@ -101,6 +122,18 @@ type OpenClawPluginToolFactoryLike = (
   ctx: OpenClawToolContextLike,
 ) => OpenClawPluginToolLike | OpenClawPluginToolLike[] | null | undefined;
 
+interface DirectVoiceMessagePayload {
+  agentId?: string;
+  sessionId?: string;
+  channelId?: string;
+  agentAccountId?: string;
+  requesterSenderId?: string;
+  senderIsOwner?: boolean;
+  audioPath: string;
+  mimeType: string;
+  text?: string;
+}
+
 interface OpenClawPluginApiLike {
   resolvePath: (input: string) => string;
   pluginConfig?: Record<string, unknown>;
@@ -114,6 +147,8 @@ interface OpenClawPluginApiLike {
     handler: (event: unknown, ctx: OpenClawHookContextLike) => Promise<unknown> | unknown,
   ) => void;
   registerTool: (tool: OpenClawPluginToolLike | OpenClawPluginToolFactoryLike) => void;
+  sendVoiceMessage?: (payload: DirectVoiceMessagePayload) => Promise<unknown> | unknown;
+  sendAudioMessage?: (payload: DirectVoiceMessagePayload) => Promise<unknown> | unknown;
 }
 
 interface CharacterPrepareSessionState {
@@ -195,6 +230,26 @@ function detectAudioMimeFromBase64(base64: string): string {
   }
   if (base64.startsWith("T2dnUw")) {
     return "audio/ogg";
+  }
+  return "audio/wav";
+}
+
+function detectAudioMimeFromPath(audioPath: string): string {
+  const ext = path.extname(audioPath).toLowerCase();
+  if (ext === ".ogg" || ext === ".opus") {
+    return "audio/ogg";
+  }
+  if (ext === ".mp3") {
+    return "audio/mpeg";
+  }
+  if (ext === ".m4a") {
+    return "audio/mp4";
+  }
+  if (ext === ".aac") {
+    return "audio/aac";
+  }
+  if (ext === ".flac") {
+    return "audio/flac";
   }
   return "audio/wav";
 }
@@ -516,31 +571,42 @@ async function persistImageToLocal(imageRef: string, requestId: string | null): 
   throw new Error("unsupported image reference format");
 }
 
-async function persistAudioToLocal(audioRef: string, requestId: string | null): Promise<string> {
+async function persistAudioToLocal(
+  audioRef: string,
+  requestId: string | null,
+  outputFormat: "wav" | "ogg" | "opus" = "wav",
+): Promise<string> {
   const trimmed = audioRef.trim();
   if (!trimmed) {
     throw new Error("empty audio reference");
   }
 
-  const localPath = resolveExistingLocalPath(trimmed);
-  if (localPath) {
-    await fs.access(localPath);
+  let localPath: string | null = null;
+  const existingLocalPath = resolveExistingLocalPath(trimmed);
+  if (existingLocalPath) {
+    await fs.access(existingLocalPath);
+    localPath = existingLocalPath;
+  } else if (AUDIO_DATA_URL_PATTERN.test(trimmed)) {
+    localPath = await persistDataUrlAudio(trimmed, requestId);
+  } else if (HTTP_URL_PATTERN.test(trimmed)) {
+    localPath = await persistRemoteAudio(trimmed, requestId);
+  } else if (isLikelyRawBase64(trimmed)) {
+    localPath = await persistRawBase64Audio(trimmed, requestId);
+  }
+
+  if (!localPath) {
+    throw new Error("unsupported audio reference format");
+  }
+
+  try {
+    const transcoded = await transcodeAudioWithFfmpeg({
+      inputPath: localPath,
+      outputFormat,
+    });
+    return transcoded.outputPath;
+  } catch {
     return localPath;
   }
-
-  if (AUDIO_DATA_URL_PATTERN.test(trimmed)) {
-    return persistDataUrlAudio(trimmed, requestId);
-  }
-
-  if (HTTP_URL_PATTERN.test(trimmed)) {
-    return persistRemoteAudio(trimmed, requestId);
-  }
-
-  if (isLikelyRawBase64(trimmed)) {
-    return persistRawBase64Audio(trimmed, requestId);
-  }
-
-  throw new Error("unsupported audio reference format");
 }
 
 function resolvePluginRoot(api: OpenClawPluginApiLike): string {
@@ -713,12 +779,27 @@ function resolveRuntimeConfig(
     proactiveSelfie: { enabled: false, probability: 0.1 },
     tts: {
       enabled: false,
-      model: "qwen3-tts-flash",
-      voice: "Chelsie",
-      languageType: "Chinese",
-      apiKey: "",
-      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      provider: "aliyun-official",
+      outputFormat: "wav",
       degradeMessage: "语音暂时发送失败，我先打字陪你。",
+      official: {
+        model: "qwen3-tts-flash",
+        voice: "Chelsie",
+        languageType: "Chinese",
+        apiKey: "",
+        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      },
+      clone: {
+        apiKey: "",
+        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+        targetModel: "cosyvoice-v1",
+        modelId: "",
+        synthesisModel: "cosyvoice-clone-v1",
+        speaker: "",
+        promptAudioUrl: "",
+        promptText: "",
+        statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+      },
     },
   };
 
@@ -809,25 +890,106 @@ async function formatResult(result: GenerateSelfieResult, logger: ReturnType<typ
   });
 }
 
-async function formatTtsResult(result: GenerateTtsResult): Promise<string> {
+type TtsDeliveryStatus = {
+  attempted: boolean;
+  delivered: boolean;
+  method: string | null;
+  reason?: string;
+};
+
+type TtsToolPayload =
+  | {
+      ok: true;
+      audioPath: string;
+      requestId: string | null;
+      model: string;
+      voice: string;
+      delivery?: TtsDeliveryStatus;
+      nextAction?: string;
+    }
+  | {
+      ok: false;
+      message: string;
+      error: string;
+      requestId: string | null;
+    };
+
+async function formatTtsResult(
+  result: GenerateTtsResult,
+  outputFormat: "wav" | "ogg" | "opus" = "wav",
+): Promise<TtsToolPayload> {
   if (result.ok) {
-    const audioPath = await persistAudioToLocal(result.audioUrl, result.requestId);
-    return JSON.stringify({
+    const audioPath = await persistAudioToLocal(result.audioUrl, result.requestId, outputFormat);
+    return {
       ok: true,
       audioPath,
       requestId: result.requestId,
       model: result.model,
       voice: result.voice,
-    });
+    };
   }
 
   const failure = result as GenerateTtsFailure;
-  return JSON.stringify({
+  return {
     ok: false,
     message: failure.message,
     error: failure.error,
     requestId: failure.requestId ?? null,
-  });
+  };
+}
+
+async function tryAutoSendVoiceMessage(
+  api: OpenClawPluginApiLike,
+  scope: OpenClawToolContextLike,
+  audioPath: string,
+  text: string,
+): Promise<TtsDeliveryStatus> {
+  const payload: DirectVoiceMessagePayload = {
+    agentId: scope.agentId,
+    sessionId: scope.sessionId,
+    channelId: scope.messageChannel,
+    agentAccountId: scope.agentAccountId,
+    requesterSenderId: scope.requesterSenderId,
+    senderIsOwner: scope.senderIsOwner,
+    audioPath,
+    mimeType: detectAudioMimeFromPath(audioPath),
+    text,
+  };
+
+  if (typeof api.sendVoiceMessage === "function") {
+    try {
+      await api.sendVoiceMessage(payload);
+      return { attempted: true, delivered: true, method: "sendVoiceMessage" };
+    } catch (error) {
+      return {
+        attempted: true,
+        delivered: false,
+        method: "sendVoiceMessage",
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  if (typeof api.sendAudioMessage === "function") {
+    try {
+      await api.sendAudioMessage(payload);
+      return { attempted: true, delivered: true, method: "sendAudioMessage" };
+    } catch (error) {
+      return {
+        attempted: true,
+        delivered: false,
+        method: "sendAudioMessage",
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  return {
+    attempted: false,
+    delivered: false,
+    method: null,
+    reason: "RUNTIME_CAPABILITY_MISSING",
+  };
 }
 
 export default function registerClawMateCompanion(api: OpenClawPluginApiLike): void {
@@ -1070,9 +1232,15 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
           };
         }
 
-        let text: string;
+        let payload: TtsToolPayload;
         try {
-          text = await formatTtsResult(result);
+          payload = await formatTtsResult(result, config.tts.outputFormat);
+          if (payload.ok) {
+            payload.delivery = await tryAutoSendVoiceMessage(api, toolScope, payload.audioPath, params.text ?? "");
+            if (!payload.delivery.delivered) {
+              payload.nextAction = "use_audio_path_to_send_voice";
+            }
+          }
         } catch (error) {
           const remoteAudioUrl =
             result.ok && HTTP_URL_PATTERN.test(result.audioUrl.trim()) ? result.audioUrl.trim() : null;
@@ -1083,19 +1251,19 @@ export default function registerClawMateCompanion(api: OpenClawPluginApiLike): v
             agentId: toolScope.agentId,
             sessionId: toolScope.sessionId,
           });
-          text = JSON.stringify({
+          payload = {
             ok: false,
             message: config.tts.degradeMessage,
             error: error instanceof Error ? error.message : String(error),
             requestId: result.ok ? result.requestId ?? null : null,
-          });
+          };
         }
 
         return {
           content: [
             {
               type: "text",
-              text,
+              text: JSON.stringify(payload),
             },
           ],
         };

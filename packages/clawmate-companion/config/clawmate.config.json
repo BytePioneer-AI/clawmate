@@ -19,12 +19,27 @@
   },
   "tts": {
     "enabled": false,
-    "model": "qwen3-tts-flash",
-    "voice": "Chelsie",
-    "languageType": "Chinese",
-    "apiKey": "YOUR_DASHSCOPE_API_KEY",
-    "baseUrl": "https://dashscope.aliyuncs.com/api/v1",
-    "degradeMessage": "语音暂时发送失败，我先打字陪你。"
+    "provider": "aliyun-official",
+    "outputFormat": "wav",
+    "degradeMessage": "语音暂时发送失败，我先打字陪你。",
+    "official": {
+      "model": "qwen3-tts-flash",
+      "voice": "Chelsie",
+      "languageType": "Chinese",
+      "apiKey": "YOUR_DASHSCOPE_API_KEY",
+      "baseUrl": "https://dashscope.aliyuncs.com/api/v1"
+    },
+    "clone": {
+      "apiKey": "YOUR_DASHSCOPE_API_KEY",
+      "baseUrl": "https://dashscope.aliyuncs.com/api/v1",
+      "targetModel": "cosyvoice-v1",
+      "modelId": "",
+      "synthesisModel": "cosyvoice-clone-v1",
+      "speaker": "",
+      "promptAudioUrl": "",
+      "promptText": "",
+      "statusUrl": "https://dashscope.aliyuncs.com/api/v1"
+    }
   },
   "providers": {
     "mock": {

@@ -31,6 +31,7 @@
     "clawmate:test": "node --import tsx --test packages/clawmate-companion/src/plugin.test.ts packages/clawmate-companion/src/plugin.tts.test.ts packages/clawmate-companion/src/cli.test.cjs packages/clawmate-companion/src/core/providers/openai-compatible.test.ts packages/clawmate-companion/src/core/providers/gemini.test.ts",
     "clawmate:probe:openai": "cd packages/clawmate-companion && node --import tsx skills/clawmate-companion/scripts/probe-openai-edits.ts",
     "clawmate:probe:tts": "cd packages/clawmate-companion && node --import tsx scripts/probe-qwen-tts.ts",
+    "clawmate:probe:tts:clone": "cd packages/clawmate-companion && node --import tsx scripts/probe-aliyun-clone-tts.ts",
     "clawmate:setup": "node packages/clawmate-companion/bin/cli.cjs",
     "release": "node scripts/release.mjs",
     "release:patch": "node scripts/release.mjs patch --publish",

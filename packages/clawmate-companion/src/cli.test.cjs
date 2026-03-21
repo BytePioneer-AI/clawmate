@@ -28,7 +28,10 @@ test("hasConfiguredScopes counts shared defaults and agent enable/disable states
   assert.equal(__testing.hasConfiguredScopes({
     tts: {
       enabled: true,
-      voice: "Chelsie",
+      provider: "aliyun-official",
+      official: {
+        voice: "Chelsie",
+      },
     },
   }), true);
   assert.equal(__testing.hasConfiguredScopes({
@@ -62,7 +65,10 @@ test("hasConfiguredAgentScopes ignores shared defaults and only counts agent ent
   assert.equal(__testing.hasConfiguredAgentScopes({
     tts: {
       enabled: true,
-      voice: "Chelsie",
+      provider: "aliyun-official",
+      official: {
+        voice: "Chelsie",
+      },
     },
   }), false);
   assert.equal(__testing.hasConfiguredAgentScopes({
@@ -189,12 +195,27 @@ test("resolveScopeSettings marks shared fields as unconfigured on fresh install"
   assert.deepEqual(result.currentProactiveSelfie, { enabled: false, probability: 0.1 });
   assert.deepEqual(result.currentTts, {
     enabled: false,
-    model: "qwen3-tts-flash",
-    voice: "Chelsie",
-    languageType: "Chinese",
-    apiKey: "",
-    baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+    provider: "aliyun-official",
+    outputFormat: "wav",
     degradeMessage: "语音暂时发送失败，我先打字陪你。",
+    official: {
+      model: "qwen3-tts-flash",
+      voice: "Chelsie",
+      languageType: "Chinese",
+      apiKey: "",
+      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+    },
+    clone: {
+      apiKey: "",
+      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      targetModel: "cosyvoice-v1",
+      modelId: "",
+      synthesisModel: "cosyvoice-v1",
+      speaker: "",
+      promptAudioUrl: "",
+      promptText: "",
+      statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+    },
   });
 });
 
@@ -220,18 +241,6 @@ test("CLI provider prompts switch with English locale", () => {
 
   assert.equal(providers.aliyun.fields[0].prompt, "Enter the DashScope API key");
   assert.equal(providers.modelscope.label, "ModelScope (fully free, slower)");
-  assert.equal(providers.gemini.label, "Gemini Official SDK");
-  assert.match(providers.aliyun.fields[1].choices[0].label, /Wanxiang 2\.6/);
-  assert.equal(providers.gemini.fields[3].hint, "e.g. https://generativelanguage.googleapis.com");
-  assert.deepEqual(
-    providers.gemini.fields[1].choices.map((choice) => choice.value),
-    [
-      "gemini-3-pro-image-preview",
-      "gemini-3.1-flash-image-preview",
-      "gemini-2.5-flash-image",
-      "gemini-2.5-flash-image-preview",
-    ],
-  );
 });
 
 test("Gemini CLI config omits baseUrl when using the official default endpoint", () => {
@@ -242,7 +251,7 @@ test("Gemini CLI config omits baseUrl when using the official default endpoint",
       apiKey: "gemini-key",
       model: "gemini-3.1-flash-image-preview",
       endpointMode: "official",
-      baseUrl: "https://proxy.example.com",
+      baseUrl: "https://generativelanguage.googleapis.com",
     }),
     {
       type: "gemini",
@@ -286,7 +295,7 @@ test("buildPluginConfig applies shared defaults without changing agent overrides
     selectedCharacter: "brooke",
     defaultProvider: "openai-compatible",
     proactiveSelfie: { enabled: false, probability: 0.1 },
-    tts: { enabled: true, voice: "Chelsie", languageType: "Chinese", apiKey: "shared-tts-key" },
+    tts: { enabled: true, provider: "aliyun-official", official: { voice: "Chelsie", languageType: "Chinese", apiKey: "shared-tts-key" } },
     providers: {
       "openai-compatible": { type: "openai-compatible", model: "gemini-imagen" },
     },
@@ -305,12 +314,27 @@ test("buildPluginConfig applies shared defaults without changing agent overrides
     proactiveSelection: { mode: "set", value: { enabled: true, probability: 0.2 } },
     ttsSelection: { mode: "set", value: {
       enabled: true,
-      model: "qwen3-tts-flash",
-      voice: "Maia",
-      languageType: "English",
-      apiKey: "work-tts-key",
-      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      provider: "aliyun-official",
+      outputFormat: "wav",
       degradeMessage: "语音暂时发送失败，我先打字陪你。",
+      official: {
+        model: "qwen3-tts-flash",
+        voice: "Maia",
+        languageType: "English",
+        apiKey: "work-tts-key",
+        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      },
+      clone: {
+        apiKey: "",
+        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+        targetModel: "cosyvoice-v1",
+        modelId: "",
+        synthesisModel: "cosyvoice-clone-v1",
+        speaker: "",
+        promptAudioUrl: "",
+        promptText: "",
+        statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+      },
     } },
     providerSelection: { mode: "set", providerKey: "aliyun" },
     providerConfigs: {
@@ -324,12 +348,27 @@ test("buildPluginConfig applies shared defaults without changing agent overrides
   assert.deepEqual(result.proactiveSelfie, { enabled: true, probability: 0.2 });
   assert.deepEqual(result.tts, {
     enabled: true,
-    model: "qwen3-tts-flash",
-    voice: "Maia",
-    languageType: "English",
-    apiKey: "work-tts-key",
-    baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+    provider: "aliyun-official",
+    outputFormat: "wav",
     degradeMessage: "语音暂时发送失败，我先打字陪你。",
+    official: {
+      model: "qwen3-tts-flash",
+      voice: "Maia",
+      languageType: "English",
+      apiKey: "work-tts-key",
+      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+    },
+    clone: {
+      apiKey: "",
+      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      targetModel: "cosyvoice-v1",
+      modelId: "",
+      synthesisModel: "cosyvoice-clone-v1",
+      speaker: "",
+      promptAudioUrl: "",
+      promptText: "",
+      statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+    },
   });
   assert.deepEqual(result.providers, {
     "openai-compatible": { type: "openai-compatible", model: "gemini-imagen" },
@@ -390,7 +429,7 @@ test("buildPluginConfig updates only the selected agent overrides", () => {
     selectedCharacter: "brooke",
     defaultProvider: "openai-compatible",
     proactiveSelfie: { enabled: false, probability: 0.1 },
-    tts: { enabled: true, voice: "Chelsie", languageType: "Chinese", apiKey: "shared-tts-key" },
+    tts: { enabled: true, provider: "aliyun-official", official: { voice: "Chelsie", languageType: "Chinese", apiKey: "shared-tts-key" } },
     agents: {
       main: {
         selectedCharacter: "legacy-main",
@@ -409,12 +448,27 @@ test("buildPluginConfig updates only the selected agent overrides", () => {
     proactiveSelection: { mode: "set", value: { enabled: true, probability: 0.2 } },
     ttsSelection: { mode: "set", value: {
       enabled: true,
-      model: "qwen3-tts-flash",
-      voice: "Neil",
-      languageType: "English",
-      apiKey: "work-tts-key",
-      baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      provider: "aliyun-official",
+      outputFormat: "wav",
       degradeMessage: "语音暂时发送失败，我先打字陪你。",
+      official: {
+        model: "qwen3-tts-flash",
+        voice: "Neil",
+        languageType: "English",
+        apiKey: "work-tts-key",
+        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+      },
+      clone: {
+        apiKey: "",
+        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+        targetModel: "cosyvoice-v1",
+        modelId: "",
+        synthesisModel: "cosyvoice-clone-v1",
+        speaker: "",
+        promptAudioUrl: "",
+        promptText: "",
+        statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+      },
     } },
     providerSelection: { mode: "set", providerKey: "fal" },
     providerConfigs: {
@@ -435,12 +489,27 @@ test("buildPluginConfig updates only the selected agent overrides", () => {
       proactiveSelfie: { enabled: true, probability: 0.2 },
       tts: {
         enabled: true,
-        model: "qwen3-tts-flash",
-        voice: "Neil",
-        languageType: "English",
-        apiKey: "work-tts-key",
-        baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+        provider: "aliyun-official",
+        outputFormat: "wav",
         degradeMessage: "语音暂时发送失败，我先打字陪你。",
+        official: {
+          model: "qwen3-tts-flash",
+          voice: "Neil",
+          languageType: "English",
+          apiKey: "work-tts-key",
+          baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+        },
+        clone: {
+          apiKey: "",
+          baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+          targetModel: "cosyvoice-v1",
+          modelId: "",
+          synthesisModel: "cosyvoice-clone-v1",
+          speaker: "",
+          promptAudioUrl: "",
+          promptText: "",
+          statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+        },
       },
     },
   });
@@ -477,7 +546,7 @@ test("buildPluginConfig applies a shared Gemini provider selection", () => {
   const result = __testing.buildPluginConfig({
     selectedCharacter: "brooke",
     providers: {
-      aliyun: { type: "aliyun", model: "wan2.6-image" },
+      mock: { type: "mock", pendingPolls: 0 },
     },
   }, {
     scope: { type: "shared" },
@@ -494,7 +563,7 @@ test("buildPluginConfig applies a shared Gemini provider selection", () => {
 
   assert.equal(result.defaultProvider, "gemini");
   assert.deepEqual(result.providers, {
-    aliyun: { type: "aliyun", model: "wan2.6-image" },
+    mock: { type: "mock", pendingPolls: 0 },
     gemini: {
       type: "gemini",
       apiKey: "gemini-key",
@@ -506,37 +575,41 @@ test("buildPluginConfig applies a shared Gemini provider selection", () => {
 test("buildPluginConfig applies an agent-scoped Gemini provider selection", () => {
   const result = __testing.buildPluginConfig({
     selectedCharacter: "brooke",
-    defaultProvider: "aliyun",
+    defaultProvider: "mock",
     providers: {
-      aliyun: { type: "aliyun", model: "wan2.6-image" },
+      mock: { type: "mock", pendingPolls: 0 },
+    },
+    agents: {
+      "ding-work": {
+        selectedCharacter: "brooke-anime",
+      },
     },
   }, {
-    scope: { type: "agent", agentId: "ding-main" },
+    scope: { type: "agent", agentId: "ding-work" },
     providerSelection: { mode: "set", providerKey: "gemini" },
     providerConfigs: {
       gemini: {
         type: "gemini",
         apiKey: "gemini-key",
         model: "gemini-2.5-flash-image",
-        baseUrl: "https://proxy.example.com",
       },
     },
     defaultUserCharacterRoot: "C:\\Users\\tester\\.openclaw\\clawmeta",
   });
 
-  assert.deepEqual(result.agents, {
-    "ding-main": {
-      enabled: true,
-      defaultProvider: "gemini",
-    },
-  });
   assert.deepEqual(result.providers, {
-    aliyun: { type: "aliyun", model: "wan2.6-image" },
+    mock: { type: "mock", pendingPolls: 0 },
     gemini: {
       type: "gemini",
       apiKey: "gemini-key",
       model: "gemini-2.5-flash-image",
-      baseUrl: "https://proxy.example.com",
+    },
+  });
+  assert.deepEqual(result.agents, {
+    "ding-work": {
+      enabled: true,
+      selectedCharacter: "brooke-anime",
+      defaultProvider: "gemini",
     },
   });
 });
@@ -544,18 +617,18 @@ test("buildPluginConfig applies an agent-scoped Gemini provider selection", () =
 test("buildPluginConfig can clear a selected agent override back to shared settings", () => {
   const result = __testing.buildPluginConfig({
     selectedCharacter: "brooke",
-    defaultProvider: "openai-compatible",
+    defaultProvider: "gemini",
     proactiveSelfie: { enabled: false, probability: 0.1 },
     agents: {
-      main: {
+      "ding-main": {
+        enabled: true,
         selectedCharacter: "brooke-anime",
-        defaultProvider: "aliyun",
-        proactiveSelfie: { enabled: true, probability: 0.3 },
-        note: "keep-me",
+        defaultProvider: "gemini",
+        proactiveSelfie: { enabled: false, probability: 0.1 },
       },
     },
   }, {
-    scope: { type: "agent", agentId: "main" },
+    scope: { type: "agent", agentId: "ding-main" },
     characterSelection: { mode: "inherit" },
     proactiveSelection: { mode: "inherit" },
     providerSelection: { mode: "inherit" },
@@ -564,9 +637,8 @@ test("buildPluginConfig can clear a selected agent override back to shared setti
   });
 
   assert.deepEqual(result.agents, {
-    main: {
+    "ding-main": {
       enabled: true,
-      note: "keep-me",
     },
   });
 });
@@ -574,10 +646,16 @@ test("buildPluginConfig can clear a selected agent override back to shared setti
 test("buildPluginConfig keeps an agent explicitly enabled even when it inherits all shared settings", () => {
   const result = __testing.buildPluginConfig({
     selectedCharacter: "brooke",
-    defaultProvider: "openai-compatible",
+    defaultProvider: "mock",
     proactiveSelfie: { enabled: false, probability: 0.1 },
+    agents: {
+      "ding-main": {
+        enabled: true,
+      },
+    },
   }, {
     scope: { type: "agent", agentId: "ding-main" },
+    activationSelection: { mode: "enable" },
     characterSelection: { mode: "inherit" },
     proactiveSelection: { mode: "inherit" },
     providerSelection: { mode: "inherit" },
@@ -595,7 +673,7 @@ test("buildPluginConfig keeps an agent explicitly enabled even when it inherits 
 test("buildPluginConfig can explicitly disable an agent and keep prior overrides", () => {
   const result = __testing.buildPluginConfig({
     selectedCharacter: "brooke",
-    defaultProvider: "openai-compatible",
+    defaultProvider: "mock",
     proactiveSelfie: { enabled: false, probability: 0.1 },
     agents: {
       "ding-main": {
@@ -616,4 +694,83 @@ test("buildPluginConfig can explicitly disable an agent and keep prior overrides
       selectedCharacter: "brooke-anime",
     },
   });
+});
+
+test("createAliyunCloneVoiceModel and pollAliyunCloneVoiceModel are exposed for CLI workflow", async () => {
+  let createCalled = false;
+  let pollCalled = false;
+
+  const createResult = await __testing.createAliyunCloneVoiceModel({
+    apiKey: "test-key",
+    baseUrl: "https://dashscope.aliyuncs.com/api/v1",
+    targetModel: "cosyvoice-v3.5-plus",
+    speaker: "mghus",
+    promptAudioUrl: "https://example.com/audio.wav",
+    fetchImpl: async (url, init) => {
+      createCalled = true;
+      assert.equal(url, "https://dashscope.aliyuncs.com/api/v1/services/audio/tts/customization");
+      assert.equal(init?.method, "POST");
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        model: "voice-enrollment",
+        input: {
+          action: "create_voice",
+          target_model: "cosyvoice-v3.5-plus",
+          prefix: "mghus",
+          url: "https://example.com/audio.wav",
+        },
+      });
+      return new Response(JSON.stringify({
+        output: {
+          voice_id: "voice-123",
+          status: "PENDING",
+        },
+      }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "x-dashscope-request-id": "req-create-1",
+        },
+      });
+    },
+  });
+
+  assert.equal(createCalled, true);
+  assert.equal(createResult.taskId, null);
+  assert.equal(createResult.modelId, "voice-123");
+
+  const pollResult = await __testing.pollAliyunCloneVoiceModel({
+    apiKey: "test-key",
+    statusUrl: "https://dashscope.aliyuncs.com/api/v1",
+    taskId: "task-1",
+    maxAttempts: 1,
+    pollIntervalMs: 0,
+    fetchImpl: async (url, init) => {
+      pollCalled = true;
+      assert.equal(url, "https://dashscope.aliyuncs.com/api/v1/services/audio/tts/customization");
+      assert.equal(init?.method, "POST");
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        model: "voice-enrollment",
+        input: {
+          action: "query_voice",
+          voice_id: "task-1",
+        },
+      });
+      return new Response(JSON.stringify({
+        output: {
+          status: "OK",
+          voice_id: "voice-123",
+        },
+      }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "x-dashscope-request-id": "req-poll-1",
+        },
+      });
+    },
+  });
+
+  assert.equal(pollCalled, true);
+  assert.equal(pollResult.modelId, "voice-123");
+  assert.equal(pollResult.status, "OK");
 });

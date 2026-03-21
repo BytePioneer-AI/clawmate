@@ -49,14 +49,37 @@ export interface ProactiveSelfieConfig {
   probability: number; // 0-1, per-message trigger probability
 }
 
-export interface TtsConfig {
-  enabled: boolean;
+export type TtsProviderType = "aliyun-official" | "aliyun-clone";
+
+export type TtsOutputFormat = "wav" | "ogg" | "opus";
+
+export interface OfficialTtsConfig {
   model: string;
   voice: string;
   languageType: string;
   apiKey: string;
   baseUrl: string;
+}
+
+export interface CloneTtsConfig {
+  apiKey: string;
+  baseUrl: string;
+  targetModel: string;
+  modelId: string;
+  synthesisModel: string;
+  speaker: string;
+  promptAudioUrl: string;
+  promptText: string;
+  statusUrl: string;
+}
+
+export interface TtsConfig {
+  enabled: boolean;
+  provider: TtsProviderType;
+  outputFormat: TtsOutputFormat;
   degradeMessage: string;
+  official: OfficialTtsConfig;
+  clone: CloneTtsConfig;
 }
 
 export interface ClawMateConfig {

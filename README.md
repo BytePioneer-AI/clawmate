@@ -91,6 +91,67 @@ npx @clawmate/clawmate
 
 交互式安装向导会引导你完成角色选择、主动发图配置、语音配置和图像服务配置；多 Agent 场景下也支持只配置某个 Agent。
 
+### 复刻音色安装说明（阿里云 CosyVoice Clone）
+
+如果你在安装向导中选择 [`复刻音色`](packages/clawmate-companion/bin/cli.cjs:264)，建议先理解下面几个字段。
+
+- [`复刻目标模型`](packages/clawmate-companion/bin/cli.cjs:270)
+  - 推荐默认值：`cosyvoice-v3.5-plus`
+  - 常见可选值：`cosyvoice-v3.5-plus`、`cosyvoice-v2`
+  - 这是“拿什么底座去做声音复刻”，通常直接使用推荐值即可。
+
+- [`已存在的复刻模型 ID`](packages/clawmate-companion/bin/cli.cjs:272)
+  - 如果你已经在阿里云控制台创建过复刻音色，就把已有 `modelId` 填进来。
+  - 如果留空，表示你准备后续通过脚本或平台流程生成。
+
+- [`合成模型名称`](packages/clawmate-companion/bin/cli.cjs:274)
+  - 这是后续“真正发起语音合成”时要调用的模型名，不是角色名。
+  - 一般保持默认 `cosyvoice-clone-v1` 即可。
+
+- [`说话人名称`](packages/clawmate-companion/bin/cli.cjs:276)
+  - 这是你给这份复刻声音起的内部标识，方便区分多个音色。
+  - 例如可以填角色名、昵称或项目代号，如 `mghus`。
+
+- [`示例音频 URL`](packages/clawmate-companion/bin/cli.cjs:278)
+  - 这里要填“参考音频的公网直链 URL”。
+  - 最稳妥的做法是把音频上传到阿里云 OSS，并获取永久公开链接。
+  - 你也可以先去阿里云百炼体验中心测试复刻流程：
+    - `https://bailian.console.aliyun.com/cn-beijing?spm=5176.29619931.J_PvCec88exbQTi-U433Fxg.5.9f2110d7c0UDIv&tab=model#/efm/model_experience_center/voice?currentTab=voiceTts&primary=cloning&secondary=clone`
+
+- [`示例音频对应文本`](packages/clawmate-companion/bin/cli.cjs:280)
+  - 这里填参考音频里“实际说了什么”。
+  - 必须尽量与音频逐字一致，否则复刻质量会明显变差。
+
+- [`任务查询 Base URL`](packages/clawmate-companion/bin/cli.cjs:282)
+  - 一般直接留空即可。
+  - 只有你使用了代理网关、自建中转层或者特殊 Base URL 时才需要改。
+
+### 如何获取示例音频的公网 URL
+
+推荐用阿里云 OSS：
+
+1. 打开 OSS 控制台：
+   - `https://oss.console.aliyun.com/overview`
+2. 创建 Bucket
+3. 上传你的参考音频文件
+4. 把对象设置为“公共读”或使用带长期有效期的分享方式
+5. 复制该音频对象的公网访问 URL
+6. 把这个 URL 填到 [`示例音频 URL`](packages/clawmate-companion/bin/cli.cjs:278)
+
+建议参考音频满足：
+- 时长适中，尽量 10~30 秒
+- 人声清晰、背景噪音少
+- 只包含一个说话人
+- 文本内容完整可转写
+
+### 推荐测试顺序
+
+1. 先在阿里云百炼体验中心试一遍复刻音色流程
+2. 准备好 OSS 公网音频链接
+3. 再运行 [`npm run clawmate:setup`](package.json:34)
+4. 在安装器里选择 [`复刻音色`](packages/clawmate-companion/bin/cli.cjs:264)
+5. 如果需要离线验证，可使用探测脚本 [`npm run clawmate:probe:tts:clone`](package.json:34)
+
 安装完成后，对你的 Agent 说：
 
 ```
