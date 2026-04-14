@@ -804,6 +804,16 @@ function detectPreferredPluginRoot() {
   return OPENCLAW_EXTENSIONS_DIR;
 }
 
+function ensurePluginSymlink(targetPath, linkPath) {
+  fs.mkdirSync(path.dirname(linkPath), { recursive: true });
+  try {
+    fs.rmSync(linkPath, { recursive: true, force: true });
+  } catch {
+    // ignore cleanup failures; symlink creation below will surface real issues
+  }
+  fs.symlinkSync(targetPath, linkPath, "dir");
+}
+
 function runJsonCommand(command, timeout = 15000) {
   try {
     const output = execSync(command, {
@@ -2181,15 +2191,12 @@ async function installPlugin(pluginConfig) {
     const fallbackDest = path.join(preferredRoot, PLUGIN_ID);
     fs.mkdirSync(preferredRoot, { recursive: true });
     if (path.resolve(pluginPath) !== path.resolve(fallbackDest)) {
-      if (fs.existsSync(fallbackDest)) {
-        fs.rmSync(fallbackDest, { recursive: true, force: true });
-      }
-      copyDir(pluginPath, fallbackDest);
+      ensurePluginSymlink(pluginPath, fallbackDest);
     }
     if (!hasInstalledPluginManifest(preferredRoot)) {
-      throw new Error(`${t("link_fail")} manifest missing after fallback copy`);
+      throw new Error(`${t("link_fail")} symlink missing manifest after fallback`);
     }
-    logSuccess(`${t("link_ok")} (${preferredRoot})`);
+    logSuccess(`${t("link_ok")} (${fallbackDest} -> ${pluginPath})`);
   }
 
   // Update openclaw.json with provider config — only write non-skipped fields
