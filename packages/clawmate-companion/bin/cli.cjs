@@ -804,14 +804,14 @@ function detectPreferredPluginRoot() {
   return OPENCLAW_EXTENSIONS_DIR;
 }
 
-function ensurePluginSymlink(targetPath, linkPath) {
-  fs.mkdirSync(path.dirname(linkPath), { recursive: true });
+function installPluginCopy(targetPath, destPath) {
+  fs.mkdirSync(path.dirname(destPath), { recursive: true });
   try {
-    fs.rmSync(linkPath, { recursive: true, force: true });
+    fs.rmSync(destPath, { recursive: true, force: true });
   } catch {
-    // ignore cleanup failures; symlink creation below will surface real issues
+    // ignore cleanup failures; copy below will surface real issues
   }
-  fs.symlinkSync(targetPath, linkPath, "dir");
+  copyDir(targetPath, destPath);
 }
 
 function runJsonCommand(command, timeout = 15000) {
@@ -2166,38 +2166,23 @@ async function installPlugin(pluginConfig) {
 
   // If running from npx temp dir, copy plugin to persistent location
   const pluginPath = resolvePluginInstallPath();
+  const preferredRoot = detectPreferredPluginRoot();
+  const installedDest = path.join(preferredRoot, PLUGIN_ID);
   const isRemote = pluginPath !== PLUGIN_PACKAGE_ROOT;
 
   if (isRemote) {
     logInfo(`${t("plugin_path")} ${pluginPath} (copied)`);
-    ensurePluginDependencies(pluginPath);
   } else {
     logInfo(`${t("plugin_path")} ${pluginPath}`);
   }
 
-  let linkSucceeded = false;
-  try {
-    execSync(`openclaw plugins install --link "${pluginPath}"`, {
-      stdio: "inherit",
-    });
-    logSuccess(t("link_ok"));
-    linkSucceeded = true;
-  } catch {
-    logWarn(t("link_fail"));
-  }
+  installPluginCopy(pluginPath, installedDest);
+  ensurePluginDependencies(installedDest);
 
-  if (!linkSucceeded) {
-    const preferredRoot = detectPreferredPluginRoot();
-    const fallbackDest = path.join(preferredRoot, PLUGIN_ID);
-    fs.mkdirSync(preferredRoot, { recursive: true });
-    if (path.resolve(pluginPath) !== path.resolve(fallbackDest)) {
-      ensurePluginSymlink(pluginPath, fallbackDest);
-    }
-    if (!hasInstalledPluginManifest(preferredRoot)) {
-      throw new Error(`${t("link_fail")} symlink missing manifest after fallback`);
-    }
-    logSuccess(`${t("link_ok")} (${fallbackDest} -> ${pluginPath})`);
+  if (!hasInstalledPluginManifest(preferredRoot)) {
+    throw new Error(`${t("link_fail")} copied plugin manifest missing after install`);
   }
+  logSuccess(`${t("link_ok")} (${installedDest})`);
 
   // Update openclaw.json with provider config — only write non-skipped fields
   let config = readJsonFile(OPENCLAW_CONFIG) || {};
