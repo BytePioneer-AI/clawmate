@@ -154,7 +154,9 @@ const T = {
     model_empty: "模型名称不能为空",
     field_required: "是必填项",
     config_done: "服务配置完成",
-    plugin_path: "插件路径:",
+    plugin_path: "插件源码路径:",
+    runtime_install_path: "实际运行目录:",
+    runtime_install_note_local: "检测到本地源码安装：已将插件代码复制到 OpenClaw 扩展目录，实际运行的是这个目录下的副本。",
     deps_install: "安装插件依赖",
     deps_ready: "插件依赖已就绪",
     deps_fail: "插件依赖安装失败:",
@@ -162,7 +164,9 @@ const T = {
     link_fail: "openclaw plugins install 命令失败，尝试手动配置...",
     config_written: "配置已写入:",
     summary_ready: "ClawMate Companion 已就绪!",
-    summary_path: "插件路径:",
+    summary_path: "插件源码路径:",
+    summary_runtime_path: "实际运行目录:",
+    summary_runtime_note_local: "本地源码安装时，setup 会把代码复制到 OpenClaw 扩展目录；OpenClaw 实际加载的是这个运行目录中的副本。",
     summary_provider: "图像服务:",
     summary_target: "配置目标:",
     summary_config: "配置文件:",
@@ -335,7 +339,9 @@ const T = {
     model_empty: "Model name cannot be empty",
     field_required: "is required",
     config_done: "Service configured",
-    plugin_path: "Plugin path:",
+    plugin_path: "Plugin source path:",
+    runtime_install_path: "Runtime install path:",
+    runtime_install_note_local: "Local source install detected: the plugin code was copied into the OpenClaw extensions directory, and OpenClaw runs the copied version from there.",
     deps_install: "Installing plugin dependencies",
     deps_ready: "Plugin dependencies ready",
     deps_fail: "Failed to install plugin dependencies:",
@@ -343,7 +349,9 @@ const T = {
     link_fail: "openclaw plugins install failed, trying manual config...",
     config_written: "Config written to:",
     summary_ready: "ClawMate Companion is ready!",
-    summary_path: "Plugin path:",
+    summary_path: "Plugin source path:",
+    summary_runtime_path: "Runtime install path:",
+    summary_runtime_note_local: "For local source installs, setup copies the plugin into the OpenClaw extensions directory; OpenClaw loads the copied runtime directory, not your source tree directly.",
     summary_provider: "Image service:",
     summary_target: "Config target:",
     summary_config: "Config file:",
@@ -2177,6 +2185,10 @@ async function installPlugin(pluginConfig) {
   }
 
   installPluginCopy(pluginPath, installedDest);
+  logInfo(`${t("runtime_install_path")} ${installedDest}`);
+  if (!isRemote) {
+    logInfo(t("runtime_install_note_local"));
+  }
   ensurePluginDependencies(installedDest);
 
   if (!hasInstalledPluginManifest(preferredRoot)) {
@@ -2219,6 +2231,10 @@ ${c("green", "━━━━━━━━━━━━━━━━━━━━━━
 ${c("cyan", t("summary_path"))}
   ${pluginPath}
 
+${c("cyan", t("summary_runtime_path"))}
+  ${path.join(detectPreferredPluginRoot(), PLUGIN_ID)}
+
+${!isNpxTempDir() ? `${c("yellow", t("summary_runtime_note_local"))}\n` : ""}
 ${c("cyan", t("summary_provider"))}
   ${providerLabel}
 
