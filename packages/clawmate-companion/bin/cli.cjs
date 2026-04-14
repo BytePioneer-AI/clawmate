@@ -73,6 +73,7 @@ const c = (color, text) => `${colors[color]}${text}${colors.reset}`;
 const OPENCLAW_HOME = resolveOpenClawHome();
 const OPENCLAW_DIR = OPENCLAW_HOME;
 const OPENCLAW_CONFIG = path.join(OPENCLAW_DIR, "openclaw.json");
+const OPENCLAW_EXTENSIONS_DIR = path.join(OPENCLAW_DIR, "extensions");
 const OPENCLAW_PLUGINS_DIR = path.join(OPENCLAW_DIR, "plugins");
 const PLUGIN_PACKAGE_ROOT = path.resolve(__dirname, "..");
 const PLUGIN_ID = "clawmate-companion";
@@ -779,6 +780,30 @@ function hasExistingPluginEntry() {
   return isPlainObject(config?.plugins?.entries?.[PLUGIN_ID]);
 }
 
+function hasInstalledPluginManifest(dir) {
+  if (!dir) return false;
+  const manifestPath = path.join(dir, PLUGIN_ID, "openclaw.plugin.json");
+  if (!fs.existsSync(manifestPath)) {
+    return false;
+  }
+  try {
+    const manifest = readJsonFile(manifestPath);
+    return manifest?.id === PLUGIN_ID;
+  } catch {
+    return false;
+  }
+}
+
+function detectPreferredPluginRoot() {
+  if (hasInstalledPluginManifest(OPENCLAW_EXTENSIONS_DIR)) {
+    return OPENCLAW_EXTENSIONS_DIR;
+  }
+  if (hasInstalledPluginManifest(OPENCLAW_PLUGINS_DIR)) {
+    return OPENCLAW_PLUGINS_DIR;
+  }
+  return OPENCLAW_EXTENSIONS_DIR;
+}
+
 function runJsonCommand(command, timeout = 15000) {
   try {
     const output = execSync(command, {
@@ -1274,8 +1299,10 @@ function resolvePluginInstallPath() {
   if (!isNpxTempDir()) {
     return PLUGIN_PACKAGE_ROOT;
   }
-  // Copy plugin package to ~/.openclaw/plugins/clawmate-companion/
-  const dest = path.join(OPENCLAW_PLUGINS_DIR, PLUGIN_ID);
+  const pluginRoot = detectPreferredPluginRoot();
+  // Copy plugin package to the plugin root OpenClaw actually scans.
+  const dest = path.join(pluginRoot, PLUGIN_ID);
+  fs.mkdirSync(pluginRoot, { recursive: true });
   if (fs.existsSync(dest)) {
     fs.rmSync(dest, { recursive: true, force: true });
   }
@@ -1340,7 +1367,7 @@ async function checkPrerequisites() {
   logSuccess(t("dir_ok"));
 
   // Fast local check: avoid the slower `openclaw plugins list` startup cost.
-  if (hasExistingPluginEntry()) {
+  if (hasExistingPluginEntry() || hasInstalledPluginManifest(OPENCLAW_EXTENSIONS_DIR) || hasInstalledPluginManifest(OPENCLAW_PLUGINS_DIR)) {
     logWarn(t("already_installed"));
     return "already_installed";
   }
@@ -2138,13 +2165,31 @@ async function installPlugin(pluginConfig) {
     logInfo(`${t("plugin_path")} ${pluginPath}`);
   }
 
+  let linkSucceeded = false;
   try {
     execSync(`openclaw plugins install --link "${pluginPath}"`, {
       stdio: "inherit",
     });
     logSuccess(t("link_ok"));
+    linkSucceeded = true;
   } catch {
     logWarn(t("link_fail"));
+  }
+
+  if (!linkSucceeded) {
+    const preferredRoot = detectPreferredPluginRoot();
+    const fallbackDest = path.join(preferredRoot, PLUGIN_ID);
+    fs.mkdirSync(preferredRoot, { recursive: true });
+    if (path.resolve(pluginPath) !== path.resolve(fallbackDest)) {
+      if (fs.existsSync(fallbackDest)) {
+        fs.rmSync(fallbackDest, { recursive: true, force: true });
+      }
+      copyDir(pluginPath, fallbackDest);
+    }
+    if (!hasInstalledPluginManifest(preferredRoot)) {
+      throw new Error(`${t("link_fail")} manifest missing after fallback copy`);
+    }
+    logSuccess(`${t("link_ok")} (${preferredRoot})`);
   }
 
   // Update openclaw.json with provider config — only write non-skipped fields
