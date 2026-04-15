@@ -35,7 +35,7 @@
   - `packages/clawmate-companion/src/core/providers/*`
   - `packages/clawmate-companion/src/core/types.ts`
   - `packages/clawmate-companion/openclaw.plugin.json`
-  - `packages/clawmate-companion/bin/cli.cjs`
+  - `bin/clawmate.cjs`
   - `packages/clawmate-companion/src/cli.test.cjs`
   - `packages/clawmate-companion/src/core/providers/*.test.ts`
   - `README.md` 与示例配置

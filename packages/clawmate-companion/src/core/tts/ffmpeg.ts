@@ -1,5 +1,4 @@
 import path from "node:path";
-import { spawn } from "node:child_process";
 
 export interface TranscodeAudioOptions {
   inputPath: string;
@@ -29,42 +28,15 @@ export async function transcodeAudioWithFfmpeg(options: TranscodeAudioOptions): 
   }
 
   const outputPath = buildOutputPath(options.inputPath, options.outputFormat);
-  const args = [
-    "-y",
-    "-i",
-    options.inputPath,
-    "-c:a",
-    "libopus",
-    "-b:a",
-    "48k",
-    outputPath,
-  ];
-
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn("ffmpeg", args, {
-      stdio: ["ignore", "ignore", "pipe"],
-    });
-
-    let stderr = "";
-    child.stderr.on("data", (chunk) => {
-      stderr += String(chunk);
-    });
-
-    child.on("error", (error) => {
-      reject(error);
-    });
-
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-      reject(new Error(stderr.trim() || `ffmpeg exited with code ${code ?? "unknown"}`));
-    });
-  });
+  if (path.extname(options.inputPath).toLowerCase() === path.extname(outputPath).toLowerCase()) {
+    return {
+      outputPath: options.inputPath,
+      transcoded: false,
+    };
+  }
 
   return {
-    outputPath,
-    transcoded: true,
+    outputPath: options.inputPath,
+    transcoded: false,
   };
 }

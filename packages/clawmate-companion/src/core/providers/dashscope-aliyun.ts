@@ -12,6 +12,7 @@ import {
   firstStringByPaths,
   resolveImageUrl,
 } from "./shared";
+import { resolveDashScopeApiKey } from "./env";
 
 interface DashScopeAliyunProviderConfig extends ProviderConfig {
   name: string;
@@ -117,8 +118,7 @@ function normalizeConfig(config: DashScopeAliyunProviderConfig): NormalizedConfi
   const name = config.name;
   const baseUrl = toOptionalString(config.baseUrl ?? config.base_url)?.trim() ?? "https://dashscope.aliyuncs.com/api/v1";
   const endpoint = toOptionalString(config.endpoint)?.trim() ?? "/services/aigc/multimodal-generation/generation";
-  const apiKey =
-    toOptionalString(config.apiKey ?? config.api_key)?.trim() ?? toOptionalString(process.env.DASHSCOPE_API_KEY)?.trim();
+  const apiKey = resolveDashScopeApiKey(config);
   const model = toOptionalString(config.model)?.trim();
   const timeoutMs = toFiniteNumber(config.timeoutMs ?? config.timeout_ms);
   const n = toFiniteNumber(config.n);
@@ -207,12 +207,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
   if (resolved.size > 0) {
     return Array.from(resolved);
   }
-  const fallback = dedupeNonEmptyStrings(
-    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
-      ? payload.referenceImageDataUrls
-      : [payload.referenceImageDataUrl],
-  );
-  return fallback;
+  return dedupeNonEmptyStrings(payload.referenceImageDataUrls);
 }
 
 function buildRequestBody(config: NormalizedConfig, payload: GenerateRequest): Record<string, unknown> {

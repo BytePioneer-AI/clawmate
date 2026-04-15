@@ -7,6 +7,7 @@ import { generateSelfie } from "./core/pipeline";
 import { prepareSelfie } from "./core/prepare";
 import { generateTts } from "./core/tts";
 import { transcodeAudioWithFfmpeg } from "./core/tts/ffmpeg";
+import { resolveGeneratedAudioDir, resolveGeneratedImageDir, resolveSoulMdPath } from "./core/openclaw-paths";
 import { loadCharacterAssets, listCharacters } from "./core/characters";
 import { createCharacter } from "./core/character-creator";
 import { createLogger } from "./core/logger";
@@ -268,26 +269,6 @@ function sanitizeExt(ext: string): string {
     return ".img";
   }
   return ext.toLowerCase();
-}
-
-function resolveGeneratedImageDir(now = new Date()): string {
-  const openClawHome = process.env.OPENCLAW_HOME?.trim() || path.join(os.homedir(), ".openclaw");
-  const day = now.toISOString().slice(0, 10);
-  return path.join(openClawHome, "media", "clawmate-generated", day);
-}
-
-function resolveGeneratedAudioDir(now = new Date()): string {
-  const openClawHome = process.env.OPENCLAW_HOME?.trim() || path.join(os.homedir(), ".openclaw");
-  const day = now.toISOString().slice(0, 10);
-  return path.join(openClawHome, "media", "clawmate-voice", day);
-}
-
-function resolveSoulMdPath(workspaceDir?: string): string {
-  if (typeof workspaceDir === "string" && workspaceDir.trim()) {
-    return path.join(workspaceDir, "SOUL.md");
-  }
-  const openClawHome = process.env.OPENCLAW_HOME?.trim() || path.join(os.homedir(), ".openclaw");
-  return path.join(openClawHome, "workspace", "SOUL.md");
 }
 
 function buildSoulPersonaSection(characterId: string, personaText: string): string {

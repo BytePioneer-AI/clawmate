@@ -82,11 +82,7 @@ function parseDataImageUrl(value: string): ParsedDataImage | null {
 }
 
 function buildReferenceParts(payload: GenerateRequest): Array<Record<string, unknown>> {
-  const referenceImages = dedupeNonEmptyStrings(
-    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
-      ? payload.referenceImageDataUrls
-      : [payload.referenceImageDataUrl],
-  );
+  const referenceImages = dedupeNonEmptyStrings(payload.referenceImageDataUrls);
 
   return referenceImages.map((imageUrl, index) => {
     const parsed = parseDataImageUrl(imageUrl);

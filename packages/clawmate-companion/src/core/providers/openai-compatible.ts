@@ -11,6 +11,7 @@ import {
   asImageDataUrl,
   dedupeNonEmptyStrings,
 } from "./shared";
+import { resolveOpenAiApiKey, resolveOpenAiBaseUrl } from "./env";
 
 interface OpenAICompatibleProviderConfig extends ProviderConfig {
   name: string;
@@ -38,8 +39,8 @@ interface NormalizedConfig {
 
 function normalizeConfig(config: OpenAICompatibleProviderConfig): NormalizedConfig {
   const name = config.name;
-  const apiKey = toOptionalString(config.apiKey ?? config.api_key ?? process.env.OPENAI_API_KEY)?.trim();
-  const baseURL = toOptionalString(config.baseUrl ?? config.base_url ?? process.env.OPENAI_BASE_URL)?.trim() ?? null;
+  const apiKey = resolveOpenAiApiKey(config);
+  const baseURL = resolveOpenAiBaseUrl(config);
   const timeoutMs = toFiniteNumber(config.timeoutMs ?? config.timeout_ms);
   const model = toOptionalString(config.model)?.trim() ?? "gpt-image-1.5";
 
@@ -237,11 +238,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
   if (resolved.size > 0) {
     return Array.from(resolved);
   }
-  return dedupeNonEmptyStrings(
-    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
-      ? payload.referenceImageDataUrls
-      : [payload.referenceImageDataUrl],
-  );
+  return dedupeNonEmptyStrings(payload.referenceImageDataUrls);
 }
 
 function hasEditInput(body: Record<string, unknown>, payload: GenerateRequest): boolean {

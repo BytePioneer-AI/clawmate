@@ -187,11 +187,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
   if (resolved.size > 0) {
     return Array.from(resolved);
   }
-  return dedupeNonEmptyStrings(
-    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
-      ? payload.referenceImageDataUrls
-      : [payload.referenceImageDataUrl],
-  );
+  return dedupeNonEmptyStrings(payload.referenceImageDataUrls);
 }
 
 function buildSubmitBody(config: NormalizedConfig, payload: GenerateRequest): Record<string, unknown> {

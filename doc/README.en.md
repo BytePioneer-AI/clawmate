@@ -96,7 +96,7 @@ Help me create a new character, she is a [describe occupation/personality/backgr
 git clone https://github.com/BytePioneer-AI/clawmate.git
 cd clawmate
 npm install
-node packages/clawmate-companion/bin/cli.cjs
+node bin/clawmate.cjs
 ```
 
 Verify installation:
@@ -252,6 +252,7 @@ Custom character directories are separate from built-in characters, with user di
 
 ```
 ClawMate/
+├── bin/clawmate.cjs       # Installation wizard
 └── packages/clawmate-companion/
     ├── src/core/          # Core logic (pipeline, router, providers)
     ├── skills/            # Skill definitions and character assets
@@ -259,7 +260,6 @@ ClawMate/
     │       ├── SKILL.md
     │       └── assets/characters/
     │           └── brooke/
-    └── bin/cli.cjs        # Installation wizard
 ```
 
 ---

@@ -79,7 +79,6 @@ Gemini 配置沿用项目已有 provider 风格：
 `generateSelfie()` 已经统一提供：
 
 - `prompt`
-- `referenceImageDataUrl`
 - `referenceImageDataUrls`
 
 Gemini provider 只负责把这些内容映射到 SDK 请求：

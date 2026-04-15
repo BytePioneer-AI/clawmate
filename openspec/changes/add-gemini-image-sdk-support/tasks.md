@@ -7,7 +7,7 @@
 
 ## 2. CLI Gemini setup
 
-- [x] 2.1 Add Gemini to `packages/clawmate-companion/bin/cli.cjs` provider definitions with the four preset models and custom model input
+- [x] 2.1 Add Gemini to `bin/clawmate.cjs` provider definitions with the four preset models and custom model input
 - [x] 2.2 Extend the Gemini CLI flow to let users choose between the official default Gemini API address and a custom BaseURL, and write the corresponding provider config
 - [x] 2.3 Ensure shared and agent-scoped setup flows can set `defaultProvider` to the Gemini provider entry without regressing existing provider selection behavior
 - [x] 2.4 Add CLI tests covering Gemini visibility, preset-model persistence, custom-model persistence, official default endpoint mode, and custom BaseURL mode

@@ -154,11 +154,6 @@ export async function loadCharacterAssets(options: LoadCharacterAssetsOptions = 
   };
 }
 
-export async function readReferenceImageBase64(referencePath: string): Promise<string> {
-  const data = await fs.readFile(referencePath);
-  return data.toString("base64");
-}
-
 export async function readReferenceImagesBase64(referencePaths: string[]): Promise<string[]> {
   if (!Array.isArray(referencePaths) || referencePaths.length === 0) {
     throw new ClawMateError("Reference image list cannot be empty", {

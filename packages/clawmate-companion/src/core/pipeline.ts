@@ -132,7 +132,6 @@ export async function generateSelfie(options: GenerateSelfieOptions = {}): Promi
     return `data:${mimeType};base64,${base64}`;
   });
   const referenceImageBase64 = referenceImageBase64List[0] ?? "";
-  const referenceImageDataUrl = referenceImageDataUrls[0] ?? "";
 
   if (referencePaths.length === 0) {
     logger.warn("角色缺少参考图，降级为纯提示词生图", {
@@ -163,7 +162,6 @@ export async function generateSelfie(options: GenerateSelfieOptions = {}): Promi
     referencePaths,
     referenceImageBase64,
     referenceImageBase64List,
-    referenceImageDataUrl,
     referenceImageDataUrls,
     timeState: timeState.key,
     meta: {

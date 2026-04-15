@@ -20,6 +20,7 @@ export function createMockProvider(options: MockProviderOptions = {}): ProviderA
   const failSubmitTimes = Number.isInteger(options.failSubmitTimes) ? Math.max(0, options.failSubmitTimes) : 0;
   const failPollTimes = Number.isInteger(options.failPollTimes) ? Math.max(0, options.failPollTimes) : 0;
   const transient = options.transient !== false;
+  const echoReferenceDataUrl = options.echoReferenceDataUrl !== false;
 
   let submitFailLeft = failSubmitTimes;
   let pollFailLeft = failPollTimes;
@@ -47,8 +48,13 @@ export function createMockProvider(options: MockProviderOptions = {}): ProviderA
         await sleep(10);
       }
 
-      const imageUrl = options.echoReferenceDataUrl
-        ? payload.referenceImageDataUrl
+      const referenceImage =
+        payload.referenceImageDataUrls.find((value) => typeof value === "string" && value.trim()) ||
+        payload.referencePath?.trim() ||
+        payload.referencePaths.find((value) => typeof value === "string" && value.trim()) ||
+        "";
+      const imageUrl = echoReferenceDataUrl && referenceImage
+        ? referenceImage
         : `mock://${name}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}/image.png`;
       const requestId = `${name}-req-${Math.random().toString(36).slice(2, 10)}`;
 

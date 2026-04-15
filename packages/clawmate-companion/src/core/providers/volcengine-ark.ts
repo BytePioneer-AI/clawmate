@@ -129,12 +129,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
   if (resolved.size > 0) {
     return Array.from(resolved);
   }
-  const fallback = dedupeNonEmptyStrings(
-    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
-      ? payload.referenceImageDataUrls
-      : [payload.referenceImageDataUrl],
-  );
-  return fallback;
+  return dedupeNonEmptyStrings(payload.referenceImageDataUrls);
 }
 
 function normalizeConfig(config: VolcengineArkProviderConfig): NormalizedConfig {

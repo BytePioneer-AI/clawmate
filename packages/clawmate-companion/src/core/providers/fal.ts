@@ -13,6 +13,7 @@ import {
   firstStringByPaths,
   resolveImageUrl,
 } from "./shared";
+import { resolveFalApiKey } from "./env";
 
 interface FalProviderConfig extends ProviderConfig {
   name: string;
@@ -100,7 +101,7 @@ function normalizeConfig(config: FalProviderConfig): NormalizedConfig {
   const name = config.name;
   const baseUrl = toOptionalString(config.baseUrl ?? config.base_url)?.trim() ?? "https://fal.run";
   const endpoint = normalizeEndpoint(config);
-  const apiKey = toOptionalString(config.apiKey ?? config.api_key ?? process.env.FAL_KEY)?.trim();
+  const apiKey = resolveFalApiKey(config);
   const timeoutMs = toFiniteNumber(config.timeoutMs ?? config.timeout_ms);
   const numImages = toFiniteNumber(config.numImages ?? config.num_images);
   const responseUrlPaths = toStringArray(config.responseUrlPaths ?? config.response_url_paths);
@@ -181,12 +182,7 @@ function resolveReferenceImages(body: Record<string, unknown>, payload: Generate
   if (resolved.size > 0) {
     return Array.from(resolved);
   }
-  const fallback = dedupeNonEmptyStrings(
-    Array.isArray(payload.referenceImageDataUrls) && payload.referenceImageDataUrls.length > 0
-      ? payload.referenceImageDataUrls
-      : [payload.referenceImageDataUrl],
-  );
-  return fallback;
+  return dedupeNonEmptyStrings(payload.referenceImageDataUrls);
 }
 
 function buildRequestBody(config: NormalizedConfig, payload: GenerateRequest): Record<string, unknown> {

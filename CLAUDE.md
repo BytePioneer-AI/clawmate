@@ -186,14 +186,14 @@ Run `npm run clawmate:plugin:check` to verify manifest consistency.
 
 - **Root**: CommonJS (`package.json` has `"type": "commonjs"`)
 - **Plugin package**: ESM (`packages/clawmate-companion/package.json` has `"type": "module"`)
-- **Installer CLI**: `bin/cli.cjs` uses `.cjs` extension to run as CommonJS despite plugin package being ESM
+- **Installer CLI**: `bin/clawmate.cjs` uses `.cjs` extension to run as CommonJS while the plugin package remains ESM
 - TypeScript compiled with target ES2022, moduleResolution Node
 - Use `tsx` for running TypeScript files directly: `node --import tsx script.ts`
 
 ## Important Paths
 
 - Plugin root: `packages/clawmate-companion/`
-- Installer CLI: `packages/clawmate-companion/bin/cli.cjs`
+- Installer CLI: `bin/clawmate.cjs`
 - Core logic: `packages/clawmate-companion/src/core/`
 - Character assets: `packages/clawmate-companion/skills/clawmate-companion/assets/characters/`
 - Scripts: `packages/clawmate-companion/skills/clawmate-companion/scripts/`

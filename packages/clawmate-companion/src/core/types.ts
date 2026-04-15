@@ -111,7 +111,6 @@ export interface GenerateRequest {
   referencePaths: string[];
   referenceImageBase64: string;
   referenceImageBase64List: string[];
-  referenceImageDataUrl: string;
   referenceImageDataUrls: string[];
   timeState: string;
   meta: {
