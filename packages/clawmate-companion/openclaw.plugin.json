@@ -2,7 +2,7 @@
   "id": "clawmate-companion",
   "name": "ClawMate Companion",
   "description": "角色化自拍生成插件（Tool + Skill）",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "skills": [
     "./skills"
   ],
@@ -92,11 +92,18 @@
           },
           "provider": {
             "type": "string",
-            "enum": ["aliyun-official", "aliyun-clone"]
+            "enum": [
+              "aliyun-official",
+              "aliyun-clone"
+            ]
           },
           "outputFormat": {
             "type": "string",
-            "enum": ["wav", "ogg", "opus"]
+            "enum": [
+              "wav",
+              "ogg",
+              "opus"
+            ]
           },
           "degradeMessage": {
             "type": "string"
@@ -105,26 +112,54 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "model": { "type": "string" },
-              "voice": { "type": "string" },
-              "languageType": { "type": "string" },
-              "apiKey": { "type": "string" },
-              "baseUrl": { "type": "string" }
+              "model": {
+                "type": "string"
+              },
+              "voice": {
+                "type": "string"
+              },
+              "languageType": {
+                "type": "string"
+              },
+              "apiKey": {
+                "type": "string"
+              },
+              "baseUrl": {
+                "type": "string"
+              }
             }
           },
           "clone": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "apiKey": { "type": "string" },
-              "baseUrl": { "type": "string" },
-              "targetModel": { "type": "string" },
-              "modelId": { "type": "string" },
-              "synthesisModel": { "type": "string" },
-              "speaker": { "type": "string" },
-              "promptAudioUrl": { "type": "string" },
-              "promptText": { "type": "string" },
-              "statusUrl": { "type": "string" }
+              "apiKey": {
+                "type": "string"
+              },
+              "baseUrl": {
+                "type": "string"
+              },
+              "targetModel": {
+                "type": "string"
+              },
+              "modelId": {
+                "type": "string"
+              },
+              "synthesisModel": {
+                "type": "string"
+              },
+              "speaker": {
+                "type": "string"
+              },
+              "promptAudioUrl": {
+                "type": "string"
+              },
+              "promptText": {
+                "type": "string"
+              },
+              "statusUrl": {
+                "type": "string"
+              }
             }
           },
           "model": {
@@ -235,11 +270,18 @@
                 },
                 "provider": {
                   "type": "string",
-                  "enum": ["aliyun-official", "aliyun-clone"]
+                  "enum": [
+                    "aliyun-official",
+                    "aliyun-clone"
+                  ]
                 },
                 "outputFormat": {
                   "type": "string",
-                  "enum": ["wav", "ogg", "opus"]
+                  "enum": [
+                    "wav",
+                    "ogg",
+                    "opus"
+                  ]
                 },
                 "degradeMessage": {
                   "type": "string"
@@ -248,26 +290,54 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "model": { "type": "string" },
-                    "voice": { "type": "string" },
-                    "languageType": { "type": "string" },
-                    "apiKey": { "type": "string" },
-                    "baseUrl": { "type": "string" }
+                    "model": {
+                      "type": "string"
+                    },
+                    "voice": {
+                      "type": "string"
+                    },
+                    "languageType": {
+                      "type": "string"
+                    },
+                    "apiKey": {
+                      "type": "string"
+                    },
+                    "baseUrl": {
+                      "type": "string"
+                    }
                   }
                 },
                 "clone": {
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "apiKey": { "type": "string" },
-                    "baseUrl": { "type": "string" },
-                    "targetModel": { "type": "string" },
-                    "modelId": { "type": "string" },
-                    "synthesisModel": { "type": "string" },
-                    "speaker": { "type": "string" },
-                    "promptAudioUrl": { "type": "string" },
-                    "promptText": { "type": "string" },
-                    "statusUrl": { "type": "string" }
+                    "apiKey": {
+                      "type": "string"
+                    },
+                    "baseUrl": {
+                      "type": "string"
+                    },
+                    "targetModel": {
+                      "type": "string"
+                    },
+                    "modelId": {
+                      "type": "string"
+                    },
+                    "synthesisModel": {
+                      "type": "string"
+                    },
+                    "speaker": {
+                      "type": "string"
+                    },
+                    "promptAudioUrl": {
+                      "type": "string"
+                    },
+                    "promptText": {
+                      "type": "string"
+                    },
+                    "statusUrl": {
+                      "type": "string"
+                    }
                   }
                 },
                 "model": {
