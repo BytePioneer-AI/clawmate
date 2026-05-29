@@ -6,6 +6,23 @@
 
 她知道现在几点，知道你在做什么。你问她在哪，她就告诉你；你不问，她也可能随手发来一张自拍。
 
+<table align="center">
+  <tr>
+    <td align="center" width="220">
+      <a href="https://www.atlascloud.ai/console/coding-plan">
+        <img src="doc/images/sponsors/atlas-cloud.svg" alt="Atlas Cloud" width="160" />
+      </a>
+    </td>
+    <td>
+      <strong>推荐</strong>
+      <br />
+      <a href="https://www.atlascloud.ai/zh?utm_source=github&utm_medium=link&utm_campaign=clawmate">Atlas Cloud </a>是一个全模态 AI 推理平台，它为开发者提供单一的 AI API，用于访问视频生成、图像生成和 LLM API。无需管理多个供应商集成，只需连接一次，即可统一访问 300 多个精选的跨模态模型。
+      <br />
+      <a href="https://www.atlascloud.ai/console/coding-plan">了解 Atlas Cloud 最新推出的编码方案优惠活动，享受更经济实惠的 API。</a>
+    </td>
+  </tr>
+</table>
+
 ---
 
 ## 功能
