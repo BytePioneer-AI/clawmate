@@ -7,6 +7,7 @@ import { createDashScopeAliyunProvider } from "./dashscope-aliyun";
 import { createFalProvider } from "./fal";
 import { createModelScopeProvider } from "./modelscope";
 import { createGeminiProvider } from "./gemini";
+import { createEvolinkProvider } from "./evolink";
 import type { ProviderAdapter, ProviderConfig, ProviderRegistry, ProvidersConfig } from "../types";
 
 interface NamedProviderConfig extends ProviderConfig {
@@ -24,6 +25,7 @@ const PROVIDER_TYPE_ALIASES: Record<string, string> = {
   "http-async": "http-async",
   modelscope: "modelscope",
   gemini: "gemini",
+  evolink: "evolink",
 };
 
 function normalizeText(value: unknown): string | null {
@@ -73,6 +75,9 @@ function inferProviderType(config: NamedProviderConfig, hasAsyncSubmitPollConfig
     if (normalizedBaseUrl.includes("fal.run")) {
       return "fal";
     }
+    if (normalizedBaseUrl.includes("api.evolink.ai")) {
+      return "evolink";
+    }
   }
 
   if (hasAsyncSubmitPollConfig) {
@@ -103,6 +108,8 @@ function createProvider(config: NamedProviderConfig, fetchImpl?: typeof fetch): 
     provider = createModelScopeProvider(config, fetchImpl);
   } else if (type === "gemini") {
     provider = createGeminiProvider(config);
+  } else if (type === "evolink") {
+    provider = createEvolinkProvider(config);
   } else if (type === "fal") {
     provider = createFalProvider(config, fetchImpl);
   } else if (type === "http-async") {
